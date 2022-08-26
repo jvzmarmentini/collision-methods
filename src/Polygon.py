@@ -1,13 +1,7 @@
-# ************************************************
-#   Poligonos.py
-#   Define a classe Polygon
-#   Autor: Márcio Sarroglia Pinho
-#       pinho@pucrs.br
-# ************************************************
 from OpenGL.GL import *
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
-from Ponto import *
+from Point import *
 import copy
 
 class Polygon:
@@ -17,20 +11,18 @@ class Polygon:
 
     def __len__(self):
         return len(self.Vertices)
-    
-    def insereVertice(self, x: float, y:float, z: float):
-        self.Vertices += [Ponto(x,y,z)]
 
-    #def insereVertice(self, P: Ponto):
-    #    self.Vertices += [Ponto(P.x,P.y,P.z)]
+    def __str__(self) -> str:
+        return '\n'.join([str(x) for x in self.Vertices])
+    
+    def insereVertice(self, x: float, y: float, z: float):
+        self.Vertices.append(Point(x,y,z))
 
     def getVertice(self, i):
         temp = copy.deepcopy(self.Vertices[i])
         return temp
-        #return self.Vertices[i]
     
     def desenhaPoligono(self):
-        #print ("Desenha Poligono - Tamanho:", len(self.Vertices))
         glBegin(GL_LINE_LOOP)
         for V in self.Vertices:
             glVertex3f(V.x,V.y,V.z)
@@ -42,11 +34,7 @@ class Polygon:
             glVertex3f(V.x,V.y,V.z)
         glEnd();
 
-    def imprimeVertices(self):
-        for x in self.Vertices:
-            x.imprime()
-
-    def getLimits(self):
+    def getLimits(self) -> Tuple[Point]:
         Min = copy.deepcopy(self.Vertices[0])
         Max = copy.deepcopy(self.Vertices[0])
         
@@ -74,7 +62,7 @@ class Polygon:
 # ***********************************************************************************
     def LePontosDeArquivo(self, Nome):
         
-        Pt = Ponto()
+        Pt = Point()
         infile = open(Nome)
         line = infile.readline()
         number = int(line)

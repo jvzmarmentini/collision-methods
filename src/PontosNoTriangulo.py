@@ -3,28 +3,31 @@ import os
 from OpenGL.GL import *
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
-from Poligonos import *
+from Polygon import *
 import random
 
 PontosDoCenario = Polygon()
 CampoDeVisao = Polygon()
 TrianguloBase = Polygon()
-PosicaoDoCampoDeVisao = Ponto
+PosicaoDoCampoDeVisao = Point()
+BBox = Polygon()
 
 AnguloDoCampoDeVisao=0.0
 
-Min = Ponto()
-Max = Ponto()
-Tamanho = Ponto()
-Meio = Ponto()
+Min = Point()
+Max = Point()
+Tamanho = Point()
+Meio = Point()
 
-PontoClicado = Ponto()
+PontoClicado = Point()
 
 flagDesenhaEixos = True
 
 paintPoints = False
 paintOtimization = False
 
+cPoints = [None] * 3
+cVet = [None] * 3
 
 def vetProd(v1,v2):
     return v1.x * v2.y - v1.y * v2.x
@@ -34,49 +37,64 @@ def raw():
     glPointSize(5)
     PontosDoCenario.desenhaVertices()
 
-def bruteForce():
-    cPoints = [None] * 3
-    cVet = [None] * 3
+def _bruteForce(p: Point):
+    global cPoints
+    global cVet
+
+    prod = [None] * 3
 
     for n in range(len(CampoDeVisao)):
-        cPoints[n], p2 = CampoDeVisao.getAresta(n)
-        cVet[n] = p2 - cPoints[n]
+        pVet = p - cPoints[n]
+        prod[n] = cVet[n].x * pVet.y - cVet[n].y * pVet.x
+    
+    return all(n < 0 for n in prod) or all(n >= 0 for n in prod)
+       
+    
+    
 
+def bruteForce():
     for p in PontosDoCenario.Vertices:
-        prod = [None] * 3
-
-        for n in range(len(CampoDeVisao)):
-            pVet = p - cPoints[n]
-            prod[n] = vetProd(cVet[n], pVet)
-        
-
         glPointSize(5)
         glBegin(GL_POINTS)
-        if all(n >= 0 for n in prod) or all(n < 0 for n in prod):
+        if _bruteForce(p):
             glColor3f(0, 1, 0)
         else:
             glColor3f(1,0,0)
         glVertex3f(p.x,p.y,p.z)
         glEnd()
 
-
-
 def envelope():
-    print("envelope")
+    BBoxMIN = BBox.Vertices[0]
+    BBoxMAX = BBox.Vertices[1]
+    # import pdb; pdb.set_trace()
+    glPointSize(5)
+    glBegin(GL_POINTS)
+    for p in PontosDoCenario.Vertices:
+        if p.x < BBoxMIN.x or p.y < BBoxMIN.y or p.x > BBoxMAX.x or p.y > BBoxMAX.y:
+            glColor3f(1,0,0)
+            glVertex3f(p.x,p.y,p.z)
+            pass
+        else:
+            if _bruteForce(p):
+                glColor3f(0, 1, 0)
+            else:
+                glColor3f(1,1,0)
+            glVertex3f(p.x,p.y,p.z)
+    glEnd()
 
 def quadTree():
-    print("quadtree")
+    pass
 
-queue = [raw, bruteForce, envelope, quadTree]
+queue = [envelope, raw, bruteForce, quadTree]
 
 
 # **********************************************************************
 # GeraPontos(int qtd)
 #      Metodo que gera pontos aleatorios no intervalo [Min..Max]
 # **********************************************************************
-def GeraPontos(qtd, Min: Ponto, Max: Ponto):
+def GeraPontos(qtd, Min: Point, Max: Point):
     global PontosDoCenario
-    Escala = Ponto()
+    Escala = Point()
     Escala = (Max - Min) * (1.0/1000.0)
     
     for i in range(qtd):
@@ -84,7 +102,7 @@ def GeraPontos(qtd, Min: Ponto, Max: Ponto):
         y = random.randint(0, 1000)
         x = x * Escala.x + Min.x
         y = y * Escala.y + Min.y
-        P = Ponto(x,y)
+        P = Point(x,y)
         PontosDoCenario.insereVertice(P.x, P.y, P.z)
         #PontosDoCenario.insereVertice(P)
 
@@ -98,7 +116,7 @@ def GeraPontos(qtd, Min: Ponto, Max: Ponto):
 def CriaTrianguloDoCampoDeVisao():
     global TrianguloBase, CampoDeVisao
 
-    vetor = Ponto(1,0,0)
+    vetor = Point(1,0,0)
 
     TrianguloBase.insereVertice(0,0,0)
     CampoDeVisao.insereVertice(0,0,0)
@@ -110,6 +128,8 @@ def CriaTrianguloDoCampoDeVisao():
     vetor.rotacionaZ(-90)
     TrianguloBase.insereVertice (vetor.x,vetor.y, vetor.z)
     CampoDeVisao.insereVertice (vetor.x,vetor.y, vetor.z)
+
+    
 
 
 # ***********************************************************************************
@@ -124,16 +144,20 @@ def PosicionaTrianguloDoCampoDeVisao():
 
 
     tam = Tamanho.x * 0.25
-    temp = Ponto()
+    temp = Point()
     for i in range(len(TrianguloBase)):
         temp = TrianguloBase.getVertice(i)
         temp.rotacionaZ(AnguloDoCampoDeVisao)
         CampoDeVisao.alteraVertice(i, PosicaoDoCampoDeVisao + temp*tam)
 
+    min,max = CampoDeVisao.getLimits()
+    BBox.insereVertice(min.x,min.y,min.z)
+    BBox.insereVertice(max.x,max.y,max.z)
+
 
 def AvancaCampoDeVisao(distancia):
     global PosicaoDoCampoDeVisao, AnguloDoCampoDeVisao
-    vetor = Ponto(1,0,0)
+    vetor = Point(1,0,0)
     vetor.rotacionaZ(AnguloDoCampoDeVisao)
     PosicaoDoCampoDeVisao = PosicaoDoCampoDeVisao + vetor * distancia
 
@@ -147,11 +171,11 @@ def init():
     glClearColor(0, 0, 1, 1)
     global Min, Max, Meio, Tamanho
 
-    GeraPontos(1000, Ponto(0,0), Ponto(500,500))
+    GeraPontos(1000, Point(0,0), Point(500,500))
     Min, Max = PontosDoCenario.getLimits()
     #Min, Max = PontosDoCenario.LePontosDeArquivo("PoligonoDeTeste.txt")
 
-    Meio = (Max+Min) * 0.5 # Ponto central da janela
+    Meio = (Max+Min) * 0.5 # Point central da janela
     Tamanho = (Max - Min) # Tamanho da janela em X,Y
 
     # Ajusta variaveis do triangulo que representa o campo de visao
@@ -202,7 +226,7 @@ def reshape(w,h):
 
 # ***********************************************************************************
 def display():
-    global PontoClicado, flagDesenhaEixos
+    global PontoClicado, flagDesenhaEixos, cPoints, cVet
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     glLoadIdentity()
@@ -213,6 +237,9 @@ def display():
         glColor3f(1,1,1); # R, G, B  [0..1]
         DesenhaEixos()
 
+    for n in range(len(CampoDeVisao)):
+        cPoints[n], p2 = CampoDeVisao.getAresta(n)
+        cVet[n] = p2 - cPoints[n]
     queue[0]()
 
     glLineWidth(3)
@@ -239,10 +266,7 @@ def keyboard(*args):
     if args[0] == b'r':
         not paintOtimization
     if args[0] == b'p':
-        PontosDoCenario.imprimeVertices()
-    if args[0] == b'1':
-        P1.imprime()
-        P2.imprime()
+        print(PontosDoCenario)
     if args[0] == b' ':
         flagDesenhaEixos = not flagDesenhaEixos
 
@@ -256,13 +280,13 @@ def arrow_keys(a_keys: int, x: int, y: int):
 
     #print ("Tecla:", a_keys)
     if a_keys == GLUT_KEY_UP:         # Se pressionar UP
-        AvancaCampoDeVisao(2)
+        AvancaCampoDeVisao(4)
     if a_keys == GLUT_KEY_DOWN:       # Se pressionar DOWN
-        AvancaCampoDeVisao(-2)
+        AvancaCampoDeVisao(-4)
     if a_keys == GLUT_KEY_LEFT:       # Se pressionar LEFT
-        AnguloDoCampoDeVisao = AnguloDoCampoDeVisao + 2
+        AnguloDoCampoDeVisao = AnguloDoCampoDeVisao + 4
     if a_keys == GLUT_KEY_RIGHT:      # Se pressionar RIGHT
-        AnguloDoCampoDeVisao = AnguloDoCampoDeVisao - 2
+        AnguloDoCampoDeVisao = AnguloDoCampoDeVisao - 4
 
     PosicionaTrianguloDoCampoDeVisao()
 
@@ -286,8 +310,8 @@ def mouse(button: int, state: int, x: int, y: int):
     realY = vport[3] - y
     worldCoordinate1 = gluUnProject(x, realY, 0, mvmatrix, projmatrix, vport)
 
-    PontoClicado = Ponto (worldCoordinate1[0],worldCoordinate1[1], worldCoordinate1[2])
-    PontoClicado.imprime("Ponto Clicado:")
+    PontoClicado = Point (worldCoordinate1[0],worldCoordinate1[1], worldCoordinate1[2])
+    print(f"Point clicado: {str(PontoClicado)}")
 
     glutPostRedisplay()
 
