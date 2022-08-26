@@ -1,31 +1,11 @@
-# ***********************************************************************************
-#   PontosNoTriangulo.py
-#       Autor: Márcio Sarroglia Pinho
-#       pinho@pucrs.br
-#   Este programa exibe um conjunto de Pontos e um triangulo em OpenGL
-#   Para construir este programa, foi utilizada a biblioteca PyOpenGL, disponível em
-#   http://pyopengl.sourceforge.net/documentation/index.html
-#
-#   Sugere-se consultar também as páginas listadas
-#   a seguir:
-#   http://bazaar.launchpad.net/~mcfletch/pyopengl-demo/trunk/view/head:/PyOpenGL-Demo/NeHe/lesson1.py
-#   http://pyopengl.sourceforge.net/documentation/manual-3.0/index.html#GLUT
-#
-#   No caso de usar no MacOS, pode ser necessário alterar o arquivo ctypesloader.py,
-#   conforme a descrição que está nestes links:
-#   https://stackoverflow.com/questions/63475461/unable-to-import-opengl-gl-in-python-on-macos
-#   https://stackoverflow.com/questions/6819661/python-location-on-mac-osx
-#   Veja o arquivo Patch.rtf, armazenado na mesma pasta deste fonte.
-# ***********************************************************************************
-
+# -*- coding: utf-8 -*-
+import os
 from OpenGL.GL import *
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
 from Poligonos import *
 import random
 
-# ***********************************************************************************
-# Variaveis que controlam o triangulo do campo de visao
 PontosDoCenario = Polygon()
 CampoDeVisao = Polygon()
 TrianguloBase = Polygon()
@@ -33,7 +13,6 @@ PosicaoDoCampoDeVisao = Ponto
 
 AnguloDoCampoDeVisao=0.0
 
-# Limites da Janela de Seleção
 Min = Ponto()
 Max = Ponto()
 Tamanho = Ponto()
@@ -47,8 +26,40 @@ paintPoints = False
 paintOtimization = False
 
 
+def vetProd(v1,v2):
+    return v1.x * v2.y - v1.y * v2.x
+
+
+def raw():
+    glPointSize(5)
+    PontosDoCenario.desenhaVertices()
+
 def bruteForce():
-    print("brute")
+    cPoints = [None] * 3
+    cVet = [None] * 3
+
+    for n in range(len(CampoDeVisao)):
+        cPoints[n], p2 = CampoDeVisao.getAresta(n)
+        cVet[n] = p2 - cPoints[n]
+
+    for p in PontosDoCenario.Vertices:
+        prod = [None] * 3
+
+        for n in range(len(CampoDeVisao)):
+            pVet = p - cPoints[n]
+            prod[n] = vetProd(cVet[n], pVet)
+        
+
+        glPointSize(5)
+        glBegin(GL_POINTS)
+        if all(n >= 0 for n in prod) or all(n < 0 for n in prod):
+            glColor3f(0, 1, 0)
+        else:
+            glColor3f(1,0,0)
+        glVertex3f(p.x,p.y,p.z)
+        glEnd()
+
+
 
 def envelope():
     print("envelope")
@@ -56,7 +67,7 @@ def envelope():
 def quadTree():
     print("quadtree")
 
-queue = [bruteForce, envelope, quadTree]
+queue = [raw, bruteForce, envelope, quadTree]
 
 
 # **********************************************************************
@@ -114,7 +125,7 @@ def PosicionaTrianguloDoCampoDeVisao():
 
     tam = Tamanho.x * 0.25
     temp = Ponto()
-    for i in range(TrianguloBase.getNVertices()):
+    for i in range(len(TrianguloBase)):
         temp = TrianguloBase.getVertice(i)
         temp.rotacionaZ(AnguloDoCampoDeVisao)
         CampoDeVisao.alteraVertice(i, PosicaoDoCampoDeVisao + temp*tam)
@@ -202,9 +213,7 @@ def display():
         glColor3f(1,1,1); # R, G, B  [0..1]
         DesenhaEixos()
 
-    #glPointSize(5);
-    glColor3f(1,1,0) # R, G, B  [0..1]
-    PontosDoCenario.desenhaVertices()
+    queue[0]()
 
     glLineWidth(3)
     glColor3f(1,0,0) # R, G, B  [0..1]
@@ -215,19 +224,16 @@ def display():
 # ***********************************************************************************
 # The function called whenever a key is pressed. Note the use of Python tuples to pass in: (key, x, y)
 #ESCAPE = '\033'
-ESCAPE = b'\x1b'
 def keyboard(*args):
     global flagDesenhaEixos
 
     global queue
-    # queue.extends([a1,a2,a3])
-    #print (args)
+
     # If escape is pressed, kill everything.
-    if args[0] == b'q' or args[0] == ESCAPE:
+    if args[0] == b'q' or args[0] == b'\x1b':
         os._exit(0)
     if args[0] == b'w':
-        # carrousel to move through list of algs.
-        queue.insert(len(queue),queue.pop(0)())
+        queue.append(queue.pop(0))
     if args[0] == b'e':
         not paintPoints
     if args[0] == b'r':

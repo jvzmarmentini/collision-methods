@@ -15,7 +15,7 @@ class Polygon:
     def __init__(self):
         self.Vertices = [] # atributo do objeto
 
-    def getNVertices(self):
+    def __len__(self):
         return len(self.Vertices)
     
     def insereVertice(self, x: float, y:float, z: float):
@@ -93,14 +93,14 @@ class Polygon:
 
     def getAresta(self, n):
         P1 = self.Vertices[n]
-        n1 = (n+1) % self.getNVertices()
+        n1 = (n+1) % len(self)
         P2 = self.Vertices[n1]
         return P1, P2
 
     def desenhaAresta(self, n):
         glBegin(GL_LINES)
         glVertex3f(self.Vertices[n].x,self.Vertices[n].y,self.Vertices[n].z)
-        n1 = (n+1) % self.getNVertices()
+        n1 = (n+1) % len(self)
         glVertex3f(self.Vertices[n1].x,self.Vertices[n1].y,self.Vertices[n1].z)
         glEnd()
 
