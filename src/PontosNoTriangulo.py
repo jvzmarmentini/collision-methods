@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 import os
-from OpenGL.GL import *
-from OpenGL.GLUT import *
-from OpenGL.GLU import *
-from Polygon import *
 import random
+
+from OpenGL.GL import *
+from OpenGL.GLU import *
+from OpenGL.GLUT import *
+
+from Polygon import *
 
 PontosDoCenario = Polygon()
 CampoDeVisao = Polygon()
@@ -49,9 +51,6 @@ def _bruteForce(p: Point):
     
     return all(n < 0 for n in prod) or all(n >= 0 for n in prod)
        
-    
-    
-
 def bruteForce():
     for p in PontosDoCenario.Vertices:
         glPointSize(5)
@@ -66,7 +65,16 @@ def bruteForce():
 def envelope():
     BBoxMIN = BBox.Vertices[0]
     BBoxMAX = BBox.Vertices[1]
-    # import pdb; pdb.set_trace()
+
+    glPointSize(5)
+    glBegin(GL_LINE_LOOP)
+    glColor3f(1,0,1)
+    glVertex3f(BBoxMIN.x,BBoxMIN.y,BBoxMIN.z)
+    glVertex3f(BBoxMAX.x,BBoxMIN.y,BBoxMIN.z)
+    glVertex3f(BBoxMAX.x,BBoxMAX.y,BBoxMIN.z)
+    glVertex3f(BBoxMIN.x,BBoxMAX.y,BBoxMIN.z)
+    glEnd()
+
     glPointSize(5)
     glBegin(GL_POINTS)
     for p in PontosDoCenario.Vertices:
@@ -149,10 +157,6 @@ def PosicionaTrianguloDoCampoDeVisao():
         temp = TrianguloBase.getVertice(i)
         temp.rotacionaZ(AnguloDoCampoDeVisao)
         CampoDeVisao.alteraVertice(i, PosicaoDoCampoDeVisao + temp*tam)
-
-    min,max = CampoDeVisao.getLimits()
-    BBox.insereVertice(min.x,min.y,min.z)
-    BBox.insereVertice(max.x,max.y,max.z)
 
 
 def AvancaCampoDeVisao(distancia):
@@ -240,6 +244,11 @@ def display():
     for n in range(len(CampoDeVisao)):
         cPoints[n], p2 = CampoDeVisao.getAresta(n)
         cVet[n] = p2 - cPoints[n]
+
+    min,max = CampoDeVisao.getLimits()
+    BBox.insereVertice(min.x,min.y,min.z)
+    BBox.insereVertice(max.x,max.y,max.z)
+
     queue[0]()
 
     glLineWidth(3)
@@ -314,18 +323,6 @@ def mouse(button: int, state: int, x: int, y: int):
     print(f"Point clicado: {str(PontoClicado)}")
 
     glutPostRedisplay()
-
-# ***********************************************************************************
-#
-# ***********************************************************************************
-def mouseMove(x: int, y: int):
-    #glutPostRedisplay()
-    return
-
-
-# ***********************************************************************************
-# Programa Principal
-# ***********************************************************************************
 
 glutInit(sys.argv)
 glutInitDisplayMode(GLUT_RGBA)

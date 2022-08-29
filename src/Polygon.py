@@ -1,13 +1,16 @@
-from OpenGL.GL import *
-from OpenGL.GLUT import *
-from OpenGL.GLU import *
-from Point import *
 import copy
+
+from OpenGL.GL import *
+from OpenGL.GLU import *
+from OpenGL.GLUT import *
+
+from Point import *
+
 
 class Polygon:
 
     def __init__(self):
-        self.Vertices = [] # atributo do objeto
+        self.Vertices = []
 
     def __len__(self):
         return len(self.Vertices)
@@ -18,9 +21,8 @@ class Polygon:
     def insereVertice(self, x: float, y: float, z: float):
         self.Vertices.append(Point(x,y,z))
 
-    def getVertice(self, i):
-        temp = copy.deepcopy(self.Vertices[i])
-        return temp
+    def getVertice(self, i) -> Point:
+        return copy.deepcopy(self.Vertices[i])
     
     def desenhaPoligono(self):
         glBegin(GL_LINE_LOOP)
@@ -37,29 +39,17 @@ class Polygon:
     def getLimits(self) -> Tuple[Point]:
         Min = copy.deepcopy(self.Vertices[0])
         Max = copy.deepcopy(self.Vertices[0])
-        
-        for V in self.Vertices:
-            if V.x > Max.x:
-                Max.x = V.x
-            if V.y > Max.y:
-                Max.y = V.y
-            if V.z > Max.z:
-                Max.z = V.z
-            if V.x < Min.x:
-                Min.x = V.x
-            if V.y < Min.y:
-                Min.y = V.y
-            if V.z < Min.z:
-                Min.z = V.z
-        #print("getLimits")
-        #Min.imprime()
-        #Max.imprime()
+
+        Min.x = min([v.x for v in self.Vertices])
+        Min.y = min([v.y for v in self.Vertices])
+        Min.z = min([v.z for v in self.Vertices]) 
+
+        Max.x = max([v.x for v in self.Vertices]) 
+        Max.y = max([v.y for v in self.Vertices]) 
+        Max.z = max([v.z for v in self.Vertices]) 
+    
         return Min, Max
-#def setColor()
-# ***********************************************************************************
-# LePontosDeArquivo(Nome):
-#  Realiza a leitura de uam arquivo com as coordenadas do polígono
-# ***********************************************************************************
+
     def LePontosDeArquivo(self, Nome):
         
         Pt = Point()
@@ -81,8 +71,7 @@ class Polygon:
 
     def getAresta(self, n):
         P1 = self.Vertices[n]
-        n1 = (n+1) % len(self)
-        P2 = self.Vertices[n1]
+        P2 = self.Vertices[(n+1) % len(self)]
         return P1, P2
 
     def desenhaAresta(self, n):
@@ -93,6 +82,4 @@ class Polygon:
         glEnd()
 
     def alteraVertice(self, i, P):
-    #int i, Ponto P)
         self.Vertices[i] = P
-
