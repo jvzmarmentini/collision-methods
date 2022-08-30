@@ -60,7 +60,7 @@ def envelope():
 def quadTree():
     pass
 
-queue = [envelope, raw, bruteForce, quadTree]
+queue = [raw, envelope, bruteForce, quadTree]
 
 
 def GeraPontos(qtd, Min: Point, Max: Point):
