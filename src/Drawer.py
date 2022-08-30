@@ -47,13 +47,12 @@ class Drawer():
         glEnd()
 
     @staticmethod
-    def drawAxis(amin:Point, amax:Point, mid:Point) -> None:
+    def drawAxis(amin: Point, amax: Point, mid: Point) -> None:
         glColor3f(0, 0, 0)
 
         glBegin(GL_LINES)
-        glVertex2f(amin.x,mid.y)
-        glVertex2f(amax.x,mid.y)
-        glVertex2f(mid.x,amin.y)
-        glVertex2f(mid.x,amax.y)
+        glVertex2f(amin.x, mid.y)
+        glVertex2f(amax.x, mid.y)
+        glVertex2f(mid.x, amin.y)
+        glVertex2f(mid.x, amax.y)
         glEnd()
-

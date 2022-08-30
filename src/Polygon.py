@@ -17,10 +17,10 @@ class Polygon:
 
     def __str__(self) -> str:
         return '\n'.join([str(x) for x in self.Vertices])
-    
+
     @dispatch(float, float, float)
-    def insertVertice(self, x:float, y:float, z:float=0.0) -> None:
-        self.Vertices.append(Point(x,y,z))
+    def insertVertice(self, x: float, y: float, z: float = 0.0) -> None:
+        self.Vertices.append(Point(x, y, z))
 
     @dispatch(Point)
     def insertVertice(self, p: Point) -> None:
@@ -37,12 +37,12 @@ class Polygon:
 
         Min.x = min([v.x for v in self.Vertices])
         Min.y = min([v.y for v in self.Vertices])
-        Min.z = min([v.z for v in self.Vertices]) 
+        Min.z = min([v.z for v in self.Vertices])
 
-        Max.x = max([v.x for v in self.Vertices]) 
-        Max.y = max([v.y for v in self.Vertices]) 
-        Max.z = max([v.z for v in self.Vertices]) 
-    
+        Max.x = max([v.x for v in self.Vertices])
+        Max.y = max([v.y for v in self.Vertices])
+        Max.z = max([v.z for v in self.Vertices])
+
         return Min, Max
 
     def modifyVertice(self, i, P):
@@ -52,7 +52,7 @@ class Polygon:
         v1 = self.Vertices[n]
         v2 = self.Vertices[(n+1) % len(self)]
         return v2 - v1
-        
+
     def isPointInside(self, p: Point) -> bool:
         prod = []
 
@@ -60,5 +60,5 @@ class Polygon:
             polyEdge = self.getEdge(i)
             pointEdge = p - v
             prod.append(polyEdge.x * pointEdge.y - polyEdge.y * pointEdge.x)
-        
+
         return all(n < 0 for n in prod) or all(n >= 0 for n in prod)
