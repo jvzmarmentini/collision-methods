@@ -24,7 +24,7 @@ This path location depends on your python installation. If you're using a virtua
 ## Usage
 
 ```bash
-python3 src/PontosNoTriangulo.py
+python main.py
 ```
 
 ## Contributing

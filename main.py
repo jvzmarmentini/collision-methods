@@ -6,8 +6,9 @@ from OpenGL.GL import *
 from OpenGL.GLU import *
 from OpenGL.GLUT import *
 
-from Polygon import *
-from Drawer import *
+from src.Polygon import *
+from src.Drawer import *
+from src.Point import *
 
 PontosDoCenario = Polygon()
 CampoDeVisao = Polygon()
@@ -155,10 +156,8 @@ def DesenhaEixos():
     global Min, Max, Meio
 
     glBegin(GL_LINES)
-    # eixo horizontal
     glVertex2f(Min.x,Meio.y)
     glVertex2f(Max.x,Meio.y)
-    # eixo vertical
     glVertex2f(Meio.x,Min.y)
     glVertex2f(Meio.x,Max.y)
     glEnd()
@@ -194,6 +193,7 @@ def display():
     Drawer.drawPolygon(CampoDeVisao, 1, 0, 0)
 
     glutSwapBuffers()
+    glutPostRedisplay()
 
 def keyboard(*args):
     global flagDesenhaEixos, TamanhoCV
@@ -239,9 +239,6 @@ def arrow_keys(a_keys: int, x: int, y: int):
 
     glutPostRedisplay()
 
-# ***********************************************************************************
-#
-# ***********************************************************************************
 def mouse(button: int, state: int, x: int, y: int):
     global PontoClicado
     if (state != GLUT_DOWN): 
@@ -262,21 +259,25 @@ def mouse(button: int, state: int, x: int, y: int):
 
     glutPostRedisplay()
 
-glutInit(sys.argv)
-glutInitDisplayMode(GLUT_RGBA)
-# Define o tamanho inicial da janela grafica do programa
-glutInitWindowSize(500, 500)
-glutInitWindowPosition(100, 100)
-wind = glutCreateWindow("Pontos no Triangulo")
-glutDisplayFunc(display)
-#glutIdleFunc(display)
-glutReshapeFunc(reshape)
-glutKeyboardFunc(keyboard)
-glutSpecialFunc(arrow_keys)
-glutMouseFunc(mouse)
-init()
+def main():
+    glutInit(sys.argv)
+    glutInitDisplayMode(GLUT_RGBA)
+    # Define o tamanho inicial da janela grafica do programa
+    glutInitWindowSize(500, 500)
+    glutInitWindowPosition(100, 100)
+    wind = glutCreateWindow("Pontos no Triangulo")
+    glutDisplayFunc(display)
+    #glutIdleFunc(display)
+    glutReshapeFunc(reshape)
+    glutKeyboardFunc(keyboard)
+    glutSpecialFunc(arrow_keys)
+    glutMouseFunc(mouse)
+    init()
 
-try:
-    glutMainLoop()
-except SystemExit:
-    pass
+    try:
+        glutMainLoop()
+    except SystemExit:
+        pass
+
+if __name__=='__main__':
+    main()

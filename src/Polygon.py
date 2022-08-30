@@ -7,7 +7,7 @@ from OpenGL.GL import *
 from OpenGL.GLU import *
 from OpenGL.GLUT import *
 
-from Point import *
+from src.Point import *
 
 
 class Polygon:
@@ -21,7 +21,7 @@ class Polygon:
         return '\n'.join([str(x) for x in self.Vertices])
     
     @dispatch(float, float, float)
-    def insertVertice(self, x:float, y:float, z:float) -> None:
+    def insertVertice(self, x:float, y:float, z:float=0.0) -> None:
         self.Vertices.append(Point(x,y,z))
 
     @dispatch(Point)

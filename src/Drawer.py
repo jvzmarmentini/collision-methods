@@ -2,7 +2,7 @@ from OpenGL.GL import *
 from OpenGL.GLU import *
 from OpenGL.GLUT import *
 
-from Polygon import *
+from src.Polygon import *
 
 
 class Drawer():
