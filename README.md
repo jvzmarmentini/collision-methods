@@ -6,7 +6,7 @@ Esse trabalho consiste em desenvolver um programa que avalie algoritmos de inclu
 Use the package manager [pip](https://pip.pypa.io/en/stable/) to install PyOpenGL.
 
 ```bash
-pip install PyOpenGL==3.1.6
+pip install -r requirements.txt
 ```
 
 Obs 1: We strongly recommend to use a [virtual env](https://docs.python.org/3/library/venv.html) to isolate the packages.

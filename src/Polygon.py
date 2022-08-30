@@ -1,6 +1,4 @@
 import copy
-import string
-from xmlrpc.client import Boolean
 
 from multipledispatch import dispatch
 from OpenGL.GL import *
@@ -55,7 +53,7 @@ class Polygon:
         v2 = self.Vertices[(n+1) % len(self)]
         return v2 - v1
         
-    def isPointInside(self, p: Point) -> Boolean:
+    def isPointInside(self, p: Point) -> bool:
         prod = []
 
         for i, v in enumerate(self.Vertices):
