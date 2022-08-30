@@ -5,7 +5,7 @@ from typing_extensions import Self
 
 
 class Point:   
-    def __init__(self, x:float=0, y:float=0, z:float=0):
+    def __init__(self, x:float=0.0, y:float=0.0, z:float=0.0):
         self.x = x
         self.y = y
         self.z = z
@@ -33,12 +33,14 @@ class Point:
         self.y = y
         self.z = z
 
-    def rotacionaZ(self, angulo:float) -> None:
+    def rotacionaZ(self, angulo:float) -> Self:
         anguloRad = angulo * 3.14159265359/180.0
         xr = self.x*math.cos(anguloRad) - self.y*math.sin(anguloRad)
         yr = self.x*math.sin(anguloRad) + self.y*math.cos(anguloRad)
         self.x = xr
         self.y = yr
+
+        return self
 
     def rotacionaY(self, angulo:float) -> None:
         anguloRad = angulo* 3.14159265359/180.0

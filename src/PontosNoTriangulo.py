@@ -7,6 +7,7 @@ from OpenGL.GLU import *
 from OpenGL.GLUT import *
 
 from Polygon import *
+from Drawer import *
 
 PontosDoCenario = Polygon()
 CampoDeVisao = Polygon()
@@ -20,6 +21,7 @@ Min = Point()
 Max = Point()
 Tamanho = Point()
 Meio = Point()
+TamanhoCV = .25
 
 PontoClicado = Point()
 
@@ -31,132 +33,86 @@ paintOtimization = False
 cPoints = [None] * 3
 cVet = [None] * 3
 
-def vetProd(v1,v2):
-    return v1.x * v2.y - v1.y * v2.x
-
-
 def raw():
-    glPointSize(5)
-    PontosDoCenario.desenhaVertices()
-
-def _bruteForce(p: Point):
-    global cPoints
-    global cVet
-
-    prod = [None] * 3
-
-    for n in range(len(CampoDeVisao)):
-        pVet = p - cPoints[n]
-        prod[n] = cVet[n].x * pVet.y - cVet[n].y * pVet.x
-    
-    return all(n < 0 for n in prod) or all(n >= 0 for n in prod)
+    Drawer.drawPoints(PontosDoCenario, 0, 0, 1)   
        
 def bruteForce():
     for p in PontosDoCenario.Vertices:
-        glPointSize(5)
-        glBegin(GL_POINTS)
-        if _bruteForce(p):
-            glColor3f(0, 1, 0)
+        if CampoDeVisao.isPointInside(p):
+            Drawer.drawPoint(p, 0, 1, 0)
         else:
-            glColor3f(1,0,0)
-        glVertex3f(p.x,p.y,p.z)
-        glEnd()
+            Drawer.drawPoint(p, 1, 0, 0)
 
 def envelope():
-    BBoxMIN = BBox.Vertices[0]
-    BBoxMAX = BBox.Vertices[1]
+    BBoxV = BBox.Vertices
+    
+    Drawer.drawBBox(BBoxV, 0, 1, 1)
 
-    glPointSize(5)
-    glBegin(GL_LINE_LOOP)
-    glColor3f(1,0,1)
-    glVertex3f(BBoxMIN.x,BBoxMIN.y,BBoxMIN.z)
-    glVertex3f(BBoxMAX.x,BBoxMIN.y,BBoxMIN.z)
-    glVertex3f(BBoxMAX.x,BBoxMAX.y,BBoxMIN.z)
-    glVertex3f(BBoxMIN.x,BBoxMAX.y,BBoxMIN.z)
-    glEnd()
-
-    glPointSize(5)
-    glBegin(GL_POINTS)
     for p in PontosDoCenario.Vertices:
-        if p.x < BBoxMIN.x or p.y < BBoxMIN.y or p.x > BBoxMAX.x or p.y > BBoxMAX.y:
-            glColor3f(1,0,0)
-            glVertex3f(p.x,p.y,p.z)
-            pass
+        if p.x < BBoxV[0].x or p.y < BBoxV[0].y or p.x > BBoxV[1].x or p.y > BBoxV[1].y:
+            Drawer.drawPoint(p, 1, 0, 0)
         else:
-            if _bruteForce(p):
-                glColor3f(0, 1, 0)
+            if CampoDeVisao.isPointInside(p):
+                Drawer.drawPoint(p, 0, 1, 0)
             else:
-                glColor3f(1,1,0)
-            glVertex3f(p.x,p.y,p.z)
-    glEnd()
+                Drawer.drawPoint(p, 1, 1, 0)
 
 def quadTree():
     pass
 
-queue = [envelope, raw, bruteForce, quadTree]
+queue = [raw, envelope, bruteForce, quadTree]
 
 
-# **********************************************************************
-# GeraPontos(int qtd)
-#      Metodo que gera pontos aleatorios no intervalo [Min..Max]
-# **********************************************************************
 def GeraPontos(qtd, Min: Point, Max: Point):
     global PontosDoCenario
     Escala = Point()
     Escala = (Max - Min) * (1.0/1000.0)
     
-    for i in range(qtd):
+    for _ in range(qtd):
         x = random.randint(0, 1000)
         y = random.randint(0, 1000)
         x = x * Escala.x + Min.x
         y = y * Escala.y + Min.y
         P = Point(x,y)
-        PontosDoCenario.insereVertice(P.x, P.y, P.z)
-        #PontosDoCenario.insereVertice(P)
+        PontosDoCenario.insertVertice(P)
 
-# **********************************************************************
-#  CriaTrianguloDoCampoDeVisao()
-#  Cria um triangulo a partir do vetor (1,0,0), girando este vetor
-#  em 45 e -45 graus.
-#  Este vetor fica armazenado nas variáveis "TrianguloBase" e
-#  "CampoDeVisao"
-# **********************************************************************
+def readFromFile(filepath:string) -> None:
+    with open(filepath) as f:
+        for line in f:
+            words = line.split() 
+            x = float(words[0])
+            y = float(words[1])
+            PontosDoCenario.insereVertice(x, y, 0.0)
+
 def CriaTrianguloDoCampoDeVisao():
     global TrianguloBase, CampoDeVisao
 
-    vetor = Point(1,0,0)
-
-    TrianguloBase.insereVertice(0,0,0)
-    CampoDeVisao.insereVertice(0,0,0)
+    vetor = Point(1.0, 0.0, 0.0)
+    TrianguloBase.insertVertice(0.0, 0.0, 0.0)
+    CampoDeVisao.insertVertice(0.0, 0.0, 0.0)
     
     vetor.rotacionaZ(45)
-    TrianguloBase.insereVertice (vetor.x,vetor.y, vetor.z)
-    CampoDeVisao.insereVertice (vetor.x,vetor.y, vetor.z)
+    TrianguloBase.insertVertice(vetor.x,vetor.y, vetor.z)
+    CampoDeVisao.insertVertice(vetor.x,vetor.y, vetor.z)
     
     vetor.rotacionaZ(-90)
-    TrianguloBase.insereVertice (vetor.x,vetor.y, vetor.z)
-    CampoDeVisao.insereVertice (vetor.x,vetor.y, vetor.z)
-
-    
+    TrianguloBase.insertVertice(vetor.x,vetor.y, vetor.z)
+    CampoDeVisao.insertVertice(vetor.x,vetor.y, vetor.z)
 
 
-# ***********************************************************************************
-# void PosicionaTrianguloDoCampoDeVisao()
-#  Posiciona o campo de visão na posicao PosicaoDoCampoDeVisao,
-#  com a orientacao "AnguloDoCampoDeVisao".
-#  O tamanho do campo de visão eh de 25% da largura da janela.
-# **********************************************************************
 def PosicionaTrianguloDoCampoDeVisao():
     global Tamanho, CampoDeVisao, PosicaoDoCampoDeVisao, TrianguloBase
-    global AnguloDoCampoDeVisao
+    global AnguloDoCampoDeVisao, TamanhoCV
 
 
-    tam = Tamanho.x * 0.25
-    temp = Point()
+    tam = Tamanho.x * TamanhoCV
     for i in range(len(TrianguloBase)):
-        temp = TrianguloBase.getVertice(i)
-        temp.rotacionaZ(AnguloDoCampoDeVisao)
-        CampoDeVisao.alteraVertice(i, PosicaoDoCampoDeVisao + temp*tam)
+        temp = TrianguloBase.getVertice(i).rotacionaZ(AnguloDoCampoDeVisao)
+        CampoDeVisao.modifyVertice(i, PosicaoDoCampoDeVisao + temp*tam)
+
+    min,max = CampoDeVisao.getLimits()
+    BBox.modifyVertice(0, min)
+    BBox.modifyVertice(1, max)
 
 
 def AvancaCampoDeVisao(distancia):
@@ -172,7 +128,7 @@ def init():
     global PosicaoDoCampoDeVisao, AnguloDoCampoDeVisao
 
     # Define a cor do fundo da tela (AZUL)
-    glClearColor(0, 0, 1, 1)
+    glClearColor(0, 0, 0, 1)
     global Min, Max, Meio, Tamanho
 
     GeraPontos(1000, Point(0,0), Point(500,500))
@@ -188,20 +144,13 @@ def init():
 
     # Cria o triangulo que representa o campo de visao
     CriaTrianguloDoCampoDeVisao()
+
+    min,max = CampoDeVisao.getLimits()
+    BBox.insertVertice(min)
+    BBox.insertVertice(max)
+
     PosicionaTrianguloDoCampoDeVisao()
     
-# ***********************************************************************************
-#
-# ***********************************************************************************
-def DesenhaLinha (P1, P2):
-    glBegin(GL_LINES)
-    glVertex3f(P1.x,P1.y,P1.z)
-    glVertex3f(P2.x,P2.y,P2.z)
-    glEnd()
-
-# ***********************************************************************************
-#
-# ***********************************************************************************
 def DesenhaEixos():
     global Min, Max, Meio
 
@@ -214,7 +163,6 @@ def DesenhaEixos():
     glVertex2f(Meio.x,Max.y)
     glEnd()
 
-# ***********************************************************************************
 def reshape(w,h):
     global Min, Max
 
@@ -234,34 +182,21 @@ def display():
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     glLoadIdentity()
-    glColor3f(1.0, 1.0, 0.0)
 
     if (flagDesenhaEixos):
         glLineWidth(1)
-        glColor3f(1,1,1); # R, G, B  [0..1]
+        glColor3f(1,1,1)
         DesenhaEixos()
-
-    for n in range(len(CampoDeVisao)):
-        cPoints[n], p2 = CampoDeVisao.getAresta(n)
-        cVet[n] = p2 - cPoints[n]
-
-    min,max = CampoDeVisao.getLimits()
-    BBox.insereVertice(min.x,min.y,min.z)
-    BBox.insereVertice(max.x,max.y,max.z)
 
     queue[0]()
 
     glLineWidth(3)
-    glColor3f(1,0,0) # R, G, B  [0..1]
-    CampoDeVisao.desenhaPoligono()
+    Drawer.drawPolygon(CampoDeVisao, 1, 0, 0)
 
     glutSwapBuffers()
 
-# ***********************************************************************************
-# The function called whenever a key is pressed. Note the use of Python tuples to pass in: (key, x, y)
-#ESCAPE = '\033'
 def keyboard(*args):
-    global flagDesenhaEixos
+    global flagDesenhaEixos, TamanhoCV
 
     global queue
 
@@ -276,14 +211,17 @@ def keyboard(*args):
         not paintOtimization
     if args[0] == b'p':
         print(PontosDoCenario)
+    if args[0] == b'.':
+        TamanhoCV += .01
+    if args[0] == b',':
+        TamanhoCV -= .01
     if args[0] == b' ':
         flagDesenhaEixos = not flagDesenhaEixos
 
-    # Forca o redesenho da tela
+    PosicionaTrianguloDoCampoDeVisao()
+
     glutPostRedisplay()
-# **********************************************************************
-#  arrow_keys ( a_keys: int, x: int, y: int )   
-# **********************************************************************
+
 def arrow_keys(a_keys: int, x: int, y: int):
     global AnguloDoCampoDeVisao, TrianguloBase
 
