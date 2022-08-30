@@ -20,19 +20,13 @@ AnguloDoCampoDeVisao = 0.0
 
 Min = Point()
 Max = Point()
-Tamanho = Point()
 Meio = Point()
-TamanhoCV = .25
+Tamanho = Point()
+TamanhoCampoVisao = .25
 
 PontoClicado = Point()
 
 flagDesenhaEixos = True
-
-paintPoints = False
-paintOtimization = False
-
-cPoints = [None] * 3
-cVet = [None] * 3
 
 
 def raw():
@@ -83,7 +77,7 @@ def GeraPontos(qtd, Min: Point, Max: Point):
         PontosDoCenario.insertVertice(P)
 
 
-def readFromFile(filepath: string) -> None:
+def readFromFile(filepath: str) -> None:
     with open(filepath) as f:
         for line in f:
             words = line.split()
@@ -110,9 +104,9 @@ def CriaTrianguloDoCampoDeVisao():
 
 def PosicionaTrianguloDoCampoDeVisao():
     global Tamanho, CampoDeVisao, PosicaoDoCampoDeVisao, TrianguloBase
-    global AnguloDoCampoDeVisao, TamanhoCV
+    global AnguloDoCampoDeVisao, TamanhoCampoVisao
 
-    tam = Tamanho.x * TamanhoCV
+    tam = Tamanho.x * TamanhoCampoVisao
     for i in range(len(TrianguloBase)):
         temp = TrianguloBase.getVertice(i).rotacionaZ(AnguloDoCampoDeVisao)
         CampoDeVisao.modifyVertice(i, PosicaoDoCampoDeVisao + temp*tam)
@@ -131,10 +125,10 @@ def AvancaCampoDeVisao(distancia):
 
 def init():
     global PosicaoDoCampoDeVisao, AnguloDoCampoDeVisao
+    global Min, Max, Meio, Tamanho
 
     # Define a cor do fundo da tela (AZUL)
     glClearColor(0, 0, 0, 1)
-    global Min, Max, Meio, Tamanho
 
     GeraPontos(1000, Point(0, 0), Point(500, 500))
     Min, Max = PontosDoCenario.getLimits()
@@ -157,17 +151,6 @@ def init():
     PosicionaTrianguloDoCampoDeVisao()
 
 
-def DesenhaEixos():
-    global Min, Max, Meio
-
-    glBegin(GL_LINES)
-    glVertex2f(Min.x, Meio.y)
-    glVertex2f(Max.x, Meio.y)
-    glVertex2f(Meio.x, Min.y)
-    glVertex2f(Meio.x, Max.y)
-    glEnd()
-
-
 def reshape(w, h):
     global Min, Max
 
@@ -183,15 +166,14 @@ def reshape(w, h):
 
 
 def display():
-    global PontoClicado, flagDesenhaEixos, cPoints, cVet
+    global flagDesenhaEixos
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     glLoadIdentity()
 
     if (flagDesenhaEixos):
-        glLineWidth(1)
-        glColor3f(1, 1, 1)
-        DesenhaEixos()
+        global Min, Max, Meio
+        Drawer.drawAxis(Min, Max, Meio)
 
     queue[0]()
 
@@ -203,8 +185,7 @@ def display():
 
 
 def keyboard(*args):
-    global flagDesenhaEixos, TamanhoCV
-
+    global flagDesenhaEixos, TamanhoCampoVisao
     global queue
 
     # If escape is pressed, kill everything.
@@ -212,16 +193,12 @@ def keyboard(*args):
         os._exit(0)
     if args[0] == b'w':
         queue.append(queue.pop(0))
-    if args[0] == b'e':
-        not paintPoints
-    if args[0] == b'r':
-        not paintOtimization
     if args[0] == b'p':
         print(PontosDoCenario)
     if args[0] == b'.':
-        TamanhoCV += .01
+        TamanhoCampoVisao += .01
     if args[0] == b',':
-        TamanhoCV -= .01
+        TamanhoCampoVisao -= .01
     if args[0] == b' ':
         flagDesenhaEixos = not flagDesenhaEixos
 
@@ -231,7 +208,7 @@ def keyboard(*args):
 
 
 def arrow_keys(a_keys: int, x: int, y: int):
-    global AnguloDoCampoDeVisao, TrianguloBase
+    global AnguloDoCampoDeVisao
 
     #print ("Tecla:", a_keys)
     if a_keys == GLUT_KEY_UP:         # Se pressionar UP
@@ -244,7 +221,6 @@ def arrow_keys(a_keys: int, x: int, y: int):
         AnguloDoCampoDeVisao = AnguloDoCampoDeVisao - 4
 
     PosicionaTrianguloDoCampoDeVisao()
-
     glutPostRedisplay()
 
 
