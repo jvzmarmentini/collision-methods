@@ -1,4 +1,6 @@
 import copy
+from tkinter import mainloop
+from typing import List
 
 from multipledispatch import dispatch
 from OpenGL.GL import *
@@ -9,8 +11,10 @@ from src.Point import *
 
 
 class Polygon:
-    def __init__(self):
+    def __init__(self, *vertices):
         self.Vertices = []
+        if vertices is not None:
+            self.Vertices.extend(vertices)
 
     def __len__(self):
         return len(self.Vertices)
@@ -48,6 +52,15 @@ class Polygon:
     def modifyVertice(self, i, P):
         self.Vertices[i] = P
 
+    def displacementInX(self, delta: float) -> Self:
+        p = [v.x + delta for v in self.Vertices]
+        return Polygon(p)
+
+    def displacementInY(self, delta: float) -> Self:
+        print(self)
+        p = [v.y + delta for v in self.Vertices]
+        return Polygon(p)
+
     def getEdge(self, n: int) -> Point:
         v1 = self.Vertices[n]
         v2 = self.Vertices[(n+1) % len(self)]
@@ -62,3 +75,8 @@ class Polygon:
             prod.append(polyEdge.x * pointEdge.y - polyEdge.y * pointEdge.x)
 
         return all(n < 0 for n in prod) or all(n >= 0 for n in prod)
+
+    def isPointInsideBox(self, p: Point) -> bool:
+        assert len(self) == 2
+        minp, maxp = self.Vertices
+        return p.x < minp.x or p.y < minp.y or p.x > maxp.x or p.y > maxp.y

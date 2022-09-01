@@ -2,13 +2,15 @@
 import os
 import random
 
+from anytree import Node, RenderTree
+from anytree.exporter import DotExporter
 from OpenGL.GL import *
 from OpenGL.GLU import *
 from OpenGL.GLUT import *
 
-from src.Polygon import *
 from src.Drawer import *
 from src.Point import *
+from src.Polygon import *
 
 PontosDoCenario = Polygon()
 CampoDeVisao = Polygon()
@@ -42,12 +44,10 @@ def bruteForce():
 
 
 def envelope():
-    BBoxV = BBox.Vertices
-
-    Drawer.drawBBox(BBoxV, 0, 1, 1)
+    Drawer.drawBBox(BBox.Vertices, 0, 1, 1)
 
     for p in PontosDoCenario.Vertices:
-        if p.x < BBoxV[0].x or p.y < BBoxV[0].y or p.x > BBoxV[1].x or p.y > BBoxV[1].y:
+        if BBox.isPointInsideBox(p):
             Drawer.drawPoint(p, 1, 0, 0)
         else:
             if CampoDeVisao.isPointInside(p):
@@ -56,11 +56,36 @@ def envelope():
                 Drawer.drawPoint(p, 1, 1, 0)
 
 
+def _quadTree3(gmin: Point, gmax: Point, parent: Node) -> None:
+    alp = ['a', 'b', 'c', 'd']
+
+    mid = (gmin + gmax) * .5
+    delta = mid - gmin
+    # import pdb; pdb.set_trace()
+    for s in [0, 1]:
+        for c in [0, 1]:
+            name = parent.name + alp.pop(0)
+            lmin = Point(gmin.x + c * delta.x, gmin.y + s * delta.y)
+            lmax = Point(mid.x + c * delta.x, mid.y + s * delta.y)
+            poly = Polygon(lmin, lmax)
+            node = Node(name=name, poly=poly, parent=parent)
+            if node.depth < 3:
+                print(name, mid)
+                _quadTree3(lmin, lmax, node)
+
 def quadTree():
-    pass
+    global Min, Max
+    root = Node("q", poly=Polygon(Min, Max))
+
+    _quadTree3(Min, Max, root)
+
+    for pre, _, node in RenderTree(root):
+        print(f"{pre}{node.name}, min=[{node.poly.Vertices[0]}] | max=[{node.poly.Vertices[1]}]")
+        Drawer.drawBBox(node.poly.Vertices, 0, 1, 1)
+    DotExporter(root).to_picture("assets/root.png")
 
 
-queue = [raw, envelope, bruteForce, quadTree]
+queue = [quadTree, envelope , raw, bruteForce]
 
 
 def GeraPontos(qtd, Min: Point, Max: Point):
@@ -181,7 +206,7 @@ def display():
     Drawer.drawPolygon(CampoDeVisao, 1, 0, 0)
 
     glutSwapBuffers()
-    glutPostRedisplay()
+    # glutPostRedisplay()
 
 
 def keyboard(*args):
@@ -269,3 +294,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+

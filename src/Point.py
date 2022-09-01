@@ -11,7 +11,7 @@ class Point:
         self.z = z
 
     def __str__(self) -> str:
-        return f"x={self.x:.3f}\ty={self.y:.3f}\tz={self.z:.3f}"
+        return f"x={self.x:.3f} y={self.y:.3f} z={self.z:.3f}"
 
     def __add__(self, other: Self) -> Self:
         x = self.x + other.x
