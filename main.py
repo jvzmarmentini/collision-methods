@@ -18,7 +18,6 @@ CampoDeVisao = Polygon()
 TrianguloBase = Polygon()
 PosicaoDoCampoDeVisao = Point()
 BBox = Polygon()
-QuadTreeRoot = Node('n')
 
 AnguloDoCampoDeVisao = 0.0
 
@@ -31,6 +30,8 @@ TamanhoCampoVisao = .25
 PontoClicado = Point()
 
 flagDesenhaEixos = True
+
+QuadTreeRoot = Node("q", poly=Polygon(Min, Max), inside=[])
 
 
 def raw():
@@ -71,34 +72,40 @@ def _initQuadTree(gmin: Point, gmax: Point, parent: Node, points: List[Point]) -
             lmax = Point(mid.x + c * delta.x, mid.y + s * delta.y)
             poly = Polygon(lmin, lmax)
 
-            inside = list(filter(lambda p: not poly.isPointInsideBox(p), points))
+            inside = list(
+                filter(lambda p: not poly.isPointInsideBox(p), points))
 
             node = Node(name=name, poly=poly, parent=parent, inside=inside)
             if node.depth < 4:
                 _initQuadTree(lmin, lmax, node, inside)
 
+
 def quadTree():
-    global Min, Max, BBox
-    points = copy.deepcopy(PontosDoCenario.Vertices)
-    root = Node("q", poly=Polygon(Min, Max), inside=points)
+    global Min, Max, BBoxm, QuadTreeRoot
 
-    _initQuadTree(Min, Max, root, points)
+    # DEBUG
+    # for pre, _, node in RenderTree(QuadTreeRoot):
+    #     print(f"{pre}{node.name}, min=[{node.poly.Vertices[0]}] | max=[{node.poly.Vertices[1]}]")
+    #     Drawer.drawBBox(node.poly.Vertices, 0, 1, 1)
+    #     color = list(np.random.uniform(1, 0, 3))
+    #     Drawer.drawListPoints(node.inside, *color)
 
-    for pre, _, node in RenderTree(root):
-        # print(f"{pre}{node.name}, min=[{node.poly.Vertices[0]}] | max=[{node.poly.Vertices[1]}]")
-        # Drawer.drawBBox(node.poly.Vertices, 0, 1, 1)
-        color = list(np.random.uniform(1,0,3))
-        Drawer.drawListPoints(node.inside, *color)
-
-    for leafNode in PreOrderIter(root, filter_=lambda n: n.is_leaf):
+    for leafNode in PreOrderIter(QuadTreeRoot, filter_=lambda n: n.is_leaf):
         bbox = leafNode.poly
-        if BBox.collisionWithBBox(bbox):
+        if not BBox.collisionWithBBox(bbox):
+            Drawer.drawListPoints(leafNode.inside, 1, 0, 0)
+        else:
             Drawer.drawBBox(bbox.Vertices, 0, 1, 1)
+            for p in leafNode.inside:
+                if CampoDeVisao.isPointInside(p):
+                    Drawer.drawPoint(p, 0, 1, 0)
+                else:
+                    Drawer.drawPoint(p, 1, 1, 0)
 
     # DotExporter(root).to_picture("assets/root.png")
 
 
-queue = [quadTree, envelope , raw, bruteForce]
+queue = [quadTree, envelope, raw, bruteForce]
 
 
 def GeraPontos(qtd, Min: Point, Max: Point):
@@ -187,6 +194,9 @@ def init():
     BBox.insertVertice(max)
 
     PosicionaTrianguloDoCampoDeVisao()
+
+    quadTreePoints = copy.deepcopy(PontosDoCenario.Vertices)
+    _initQuadTree(Min, Max, QuadTreeRoot, quadTreePoints)
 
 
 def reshape(w, h):
@@ -307,4 +317,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
