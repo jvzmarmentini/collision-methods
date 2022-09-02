@@ -33,7 +33,7 @@ class Point:
         self.y = y
         self.z = z
 
-    def rotacionaZ(self, angulo: float) -> Self:
+    def rotateZ(self, angulo: float) -> Self:
         anguloRad = angulo * 3.14159265359/180.0
         xr = self.x*math.cos(anguloRad) - self.y*math.sin(anguloRad)
         yr = self.x*math.sin(anguloRad) + self.y*math.cos(anguloRad)

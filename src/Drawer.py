@@ -60,14 +60,6 @@ class Drawer():
         glEnd()
 
     @staticmethod
-    def drawListPoints(points: List[Point], *color: float) -> None:
-        if color is not None:
-            glColor3f(*color)
-
-        for p in points:
-            glVertex3f(p.x, p.y, p.z)
-
-    @staticmethod
     def displayTitle(string, x, y):
         glColor3f( 1, 1, 1 )
         glRasterPos2f( x, y + 10 )

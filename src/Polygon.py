@@ -22,9 +22,9 @@ class Polygon:
     def __str__(self) -> str:
         return '\n'.join([str(x) for x in self.Vertices])
 
-    @dispatch(float, float, float)
-    def insertVertice(self, x: float, y: float, z: float = 0.0) -> None:
-        self.Vertices.append(Point(x, y, z))
+    @dispatch(float, float)
+    def insertVertice(self, x: float, y: float) -> None:
+        self.Vertices.append(Point(x, y))
 
     @dispatch(Point)
     def insertVertice(self, p: Point) -> None:
@@ -76,4 +76,4 @@ class Polygon:
         assert len(self) == 2 and len(poly) == 2
         sbbm, sbbM = self.Vertices
         pbbm, pbbM = poly.getLimits()
-        return (sbbm.x < pbbM.x and sbbM.x > pbbm.x) and (sbbm.y < pbbM.y and sbbM.y > pbbm.y)
+        return (sbbm.x <= pbbM.x and sbbM.x >= pbbm.x) and (sbbm.y <= pbbM.y and sbbM.y >= pbbm.y)
