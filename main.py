@@ -31,8 +31,7 @@ PontoClicado = Point()
 
 flagDesenhaEixos = True
 
-QuadTreePoints = copy.deepcopy(PontosDoCenario.Vertices)
-QuadTreeRoot = Node("q", poly=Polygon(Min, Max), inside=QuadTreePoints)
+QuadTreeRoot = Node("q", poly=Polygon(Min, Max), inside=[])
 
 
 def raw():
@@ -82,19 +81,26 @@ def _initQuadTree(gmin: Point, gmax: Point, parent: Node, points: List[Point]) -
 
 
 def quadTree():
-    global Min, Max, BBoxm, QuadTreeRoot, QuadTreePoints
+    global Min, Max, BBoxm, QuadTreeRoot
 
-    for pre, _, node in RenderTree(QuadTreeRoot):
-        # print(f"{pre}{node.name}, min=[{node.poly.Vertices[0]}] | max=[{node.poly.Vertices[1]}]")
-        # Drawer.drawBBox(node.poly.Vertices, 0, 1, 1)
-        color = list(np.random.uniform(1, 0, 3))
-        Drawer.drawListPoints(node.inside, *color)
+    # DEBUG
+    # for pre, _, node in RenderTree(QuadTreeRoot):
+    #     print(f"{pre}{node.name}, min=[{node.poly.Vertices[0]}] | max=[{node.poly.Vertices[1]}]")
+    #     Drawer.drawBBox(node.poly.Vertices, 0, 1, 1)
+    #     color = list(np.random.uniform(1, 0, 3))
+    #     Drawer.drawListPoints(node.inside, *color)
 
     for leafNode in PreOrderIter(QuadTreeRoot, filter_=lambda n: n.is_leaf):
         bbox = leafNode.poly
-        if BBox.collisionWithBBox(bbox):
+        if not BBox.collisionWithBBox(bbox):
+            Drawer.drawListPoints(leafNode.inside, 1, 0, 0)
+        else:
             Drawer.drawBBox(bbox.Vertices, 0, 1, 1)
-            Drawer.drawListPoints(leafNode.inside, 1, 1, 0)
+            for p in leafNode.inside:
+                if CampoDeVisao.isPointInside(p):
+                    Drawer.drawPoint(p, 0, 1, 0)
+                else:
+                    Drawer.drawPoint(p, 1, 1, 0)
 
     # DotExporter(root).to_picture("assets/root.png")
 
@@ -188,7 +194,9 @@ def init():
     BBox.insertVertice(max)
 
     PosicionaTrianguloDoCampoDeVisao()
-    _initQuadTree(Min, Max, QuadTreeRoot, QuadTreePoints)
+
+    quadTreePoints = copy.deepcopy(PontosDoCenario.Vertices)
+    _initQuadTree(Min, Max, QuadTreeRoot, quadTreePoints)
 
 
 def reshape(w, h):
