@@ -2,7 +2,9 @@
 import copy
 import os
 import random
+import string
 import numpy as np
+import argparse
 
 from anytree import Node, RenderTree, PreOrderIter
 from OpenGL.GL import *
@@ -32,23 +34,37 @@ PontoClicado = Point()
 flagDesenhaEixos = True
 
 QuadTreeRoot = Node("q", poly=Polygon(Min, Max), inside=[])
+QuadTreeColor = np.random.random((6, 3))
 
 
 def raw():
-    Drawer.drawPoints(PontosDoCenario, 0, 0, 1)
+    glPointSize(4)
+    glBegin(GL_POINTS)
+
+    for p in PontosDoCenario.Vertices:
+        Drawer.drawPoint(p, 1, 0, 0)
+
+    glEnd()
 
 
 def bruteForce():
+    glPointSize(4)
+    glBegin(GL_POINTS)
+
     for p in PontosDoCenario.Vertices:
         if CampoDeVisao.isPointInside(p):
             Drawer.drawPoint(p, 0, 1, 0)
         else:
             Drawer.drawPoint(p, 1, 0, 0)
 
+    glEnd()
+
 
 def envelope():
-    Drawer.drawBBox(BBox.Vertices, 0, 1, 1)
+    Drawer.drawBBox(BBox, 0, 1, 1)
 
+    glPointSize(4)
+    glBegin(GL_POINTS)
     for p in PontosDoCenario.Vertices:
         if BBox.isPointInsideBox(p):
             Drawer.drawPoint(p, 1, 0, 0)
@@ -57,6 +73,8 @@ def envelope():
                 Drawer.drawPoint(p, 0, 1, 0)
             else:
                 Drawer.drawPoint(p, 1, 1, 0)
+
+    glEnd()
 
 
 def _initQuadTree(gmin: Point, gmax: Point, parent: Node, points: List[Point]) -> None:
@@ -76,36 +94,47 @@ def _initQuadTree(gmin: Point, gmax: Point, parent: Node, points: List[Point]) -
                 filter(lambda p: not poly.isPointInsideBox(p), points))
 
             node = Node(name=name, poly=poly, parent=parent, inside=inside)
-            if node.depth < 4:
+            if len(inside) > 2 and node.depth < 5:
                 _initQuadTree(lmin, lmax, node, inside)
 
 
 def quadTree():
-    global Min, Max, BBoxm, QuadTreeRoot
+    global Min, Max, BBoxm, QuadTreeRoot, QuadTreeColor
 
     # DEBUG
     # for pre, _, node in RenderTree(QuadTreeRoot):
-    #     print(f"{pre}{node.name}, min=[{node.poly.Vertices[0]}] | max=[{node.poly.Vertices[1]}]")
+    #     print(
+    #         f"{pre}{node.name}, min=[{node.poly.Vertices[0]}] | max=[{node.poly.Vertices[1]}]")
     #     Drawer.drawBBox(node.poly.Vertices, 0, 1, 1)
     #     color = list(np.random.uniform(1, 0, 3))
     #     Drawer.drawListPoints(node.inside, *color)
 
+    # DotExporter(QuadTreeRoot).to_picture("assets/root.png")
+
+    
+
     for leafNode in PreOrderIter(QuadTreeRoot, filter_=lambda n: n.is_leaf):
-        bbox = leafNode.poly
-        if not BBox.collisionWithBBox(bbox):
+        
+        if not BBox.collisionWithBBox(leafNode.poly):
+            glPointSize(4)
+            glBegin(GL_POINTS)
             Drawer.drawListPoints(leafNode.inside, 1, 0, 0)
+            glEnd()
         else:
-            Drawer.drawBBox(bbox.Vertices, 0, 1, 1)
+            Drawer.drawBBox(leafNode.poly, *QuadTreeColor[leafNode.depth])
+
+            glPointSize(4)
+            glBegin(GL_POINTS)
             for p in leafNode.inside:
                 if CampoDeVisao.isPointInside(p):
                     Drawer.drawPoint(p, 0, 1, 0)
                 else:
                     Drawer.drawPoint(p, 1, 1, 0)
+            glEnd()
 
-    # DotExporter(root).to_picture("assets/root.png")
 
 
-queue = [quadTree, envelope, raw, bruteForce]
+queue = [raw, bruteForce, envelope, quadTree]
 
 
 def GeraPontos(qtd, Min: Point, Max: Point):
@@ -121,14 +150,18 @@ def GeraPontos(qtd, Min: Point, Max: Point):
         P = Point(x, y)
         PontosDoCenario.insertVertice(P)
 
+    return PontosDoCenario
 
-def readFromFile(filepath: str) -> None:
+
+def readFromFile(filepath: str) -> Polygon:
     with open(filepath) as f:
         for line in f:
             words = line.split()
             x = float(words[0])
             y = float(words[1])
-            PontosDoCenario.insereVertice(x, y, 0.0)
+            PontosDoCenario.insertVertice(x, y, 0.0)
+
+    return PontosDoCenario
 
 
 def CriaTrianguloDoCampoDeVisao():
@@ -168,16 +201,18 @@ def AvancaCampoDeVisao(distancia):
     PosicaoDoCampoDeVisao = PosicaoDoCampoDeVisao + vetor * distancia
 
 
-def init():
+def init(filepath: string) -> None:
     global PosicaoDoCampoDeVisao, AnguloDoCampoDeVisao
     global Min, Max, Meio, Tamanho
 
     # Define a cor do fundo da tela (AZUL)
     glClearColor(0, 0, 0, 1)
 
-    GeraPontos(1000, Point(0, 0), Point(500, 500))
-    Min, Max = PontosDoCenario.getLimits()
-    #Min, Max = PontosDoCenario.LePontosDeArquivo("PoligonoDeTeste.txt")
+    if filepath is None:
+
+        Min, Max = GeraPontos(1000, Point(0, 0), Point(500, 500)).getLimits()
+    else:
+        Min, Max = readFromFile(filepath).getLimits()
 
     Meio = (Max+Min) * 0.5  # Point central da janela
     Tamanho = (Max - Min)  # Tamanho da janela em X,Y
@@ -223,9 +258,9 @@ def display():
         global Min, Max, Meio
         Drawer.drawAxis(Min, Max, Meio)
 
+    Drawer.displayTitle(queue[0].__name__, Min.x, Max.y)
     queue[0]()
 
-    glLineWidth(3)
     Drawer.drawPolygon(CampoDeVisao, 1, 0, 0)
 
     glutSwapBuffers()
@@ -295,19 +330,25 @@ def mouse(button: int, state: int, x: int, y: int):
 
 
 def main():
-    glutInit(sys.argv)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-f', '--file', type=str,
+                        help="filepath to set of points")
+    args = parser.parse_args()
+    filepath = args.file
+
+    glutInit()
     glutInitDisplayMode(GLUT_RGBA)
     # Define o tamanho inicial da janela grafica do programa
     glutInitWindowSize(500, 500)
     glutInitWindowPosition(100, 100)
-    wind = glutCreateWindow("Pontos no Triangulo")
+    glutCreateWindow("Pontos no Triangulo")
     glutDisplayFunc(display)
     # glutIdleFunc(display)
     glutReshapeFunc(reshape)
     glutKeyboardFunc(keyboard)
     glutSpecialFunc(arrow_keys)
     glutMouseFunc(mouse)
-    init()
+    init(filepath)
 
     try:
         glutMainLoop()
