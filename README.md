@@ -27,6 +27,12 @@ This path location depends on your python installation. If you're using a virtua
 python main.py
 ```
 
+To read the set of points from a file, use:
+
+```bash
+python main.py --file {filepath}
+``` 
+
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
