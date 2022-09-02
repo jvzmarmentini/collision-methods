@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
+import copy
 import os
 import random
+import numpy as np
 
-from anytree import Node, RenderTree
-from anytree.exporter import DotExporter
+from anytree import Node, RenderTree, PreOrderIter
 from OpenGL.GL import *
 from OpenGL.GLU import *
 from OpenGL.GLUT import *
@@ -17,6 +18,7 @@ CampoDeVisao = Polygon()
 TrianguloBase = Polygon()
 PosicaoDoCampoDeVisao = Point()
 BBox = Polygon()
+QuadTreeRoot = Node('n')
 
 AnguloDoCampoDeVisao = 0.0
 
@@ -56,33 +58,44 @@ def envelope():
                 Drawer.drawPoint(p, 1, 1, 0)
 
 
-def _quadTree3(gmin: Point, gmax: Point, parent: Node) -> None:
+def _initQuadTree(gmin: Point, gmax: Point, parent: Node, points: List[Point]) -> None:
     alp = ['a', 'b', 'c', 'd']
 
     mid = (gmin + gmax) * .5
     delta = mid - gmin
-    # import pdb; pdb.set_trace()
+
     for s in [0, 1]:
         for c in [0, 1]:
             name = parent.name + alp.pop(0)
             lmin = Point(gmin.x + c * delta.x, gmin.y + s * delta.y)
             lmax = Point(mid.x + c * delta.x, mid.y + s * delta.y)
             poly = Polygon(lmin, lmax)
-            node = Node(name=name, poly=poly, parent=parent)
-            if node.depth < 3:
-                print(name, mid)
-                _quadTree3(lmin, lmax, node)
+
+            inside = list(filter(lambda p: not poly.isPointInsideBox(p), points))
+
+            node = Node(name=name, poly=poly, parent=parent, inside=inside)
+            if node.depth < 4:
+                _initQuadTree(lmin, lmax, node, inside)
 
 def quadTree():
-    global Min, Max
-    root = Node("q", poly=Polygon(Min, Max))
+    global Min, Max, BBox
+    points = copy.deepcopy(PontosDoCenario.Vertices)
+    root = Node("q", poly=Polygon(Min, Max), inside=points)
 
-    _quadTree3(Min, Max, root)
+    _initQuadTree(Min, Max, root, points)
 
     for pre, _, node in RenderTree(root):
-        print(f"{pre}{node.name}, min=[{node.poly.Vertices[0]}] | max=[{node.poly.Vertices[1]}]")
-        Drawer.drawBBox(node.poly.Vertices, 0, 1, 1)
-    DotExporter(root).to_picture("assets/root.png")
+        # print(f"{pre}{node.name}, min=[{node.poly.Vertices[0]}] | max=[{node.poly.Vertices[1]}]")
+        # Drawer.drawBBox(node.poly.Vertices, 0, 1, 1)
+        color = list(np.random.uniform(1,0,3))
+        Drawer.drawListPoints(node.inside, *color)
+
+    for leafNode in PreOrderIter(root, filter_=lambda n: n.is_leaf):
+        bbox = leafNode.poly
+        if BBox.collisionWithBBox(bbox):
+            Drawer.drawBBox(bbox.Vertices, 0, 1, 1)
+
+    # DotExporter(root).to_picture("assets/root.png")
 
 
 queue = [quadTree, envelope , raw, bruteForce]

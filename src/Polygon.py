@@ -52,15 +52,6 @@ class Polygon:
     def modifyVertice(self, i, P):
         self.Vertices[i] = P
 
-    def displacementInX(self, delta: float) -> Self:
-        p = [v.x + delta for v in self.Vertices]
-        return Polygon(p)
-
-    def displacementInY(self, delta: float) -> Self:
-        print(self)
-        p = [v.y + delta for v in self.Vertices]
-        return Polygon(p)
-
     def getEdge(self, n: int) -> Point:
         v1 = self.Vertices[n]
         v2 = self.Vertices[(n+1) % len(self)]
@@ -80,3 +71,9 @@ class Polygon:
         assert len(self) == 2
         minp, maxp = self.Vertices
         return p.x < minp.x or p.y < minp.y or p.x > maxp.x or p.y > maxp.y
+
+    def collisionWithBBox(self, poly: Self) -> bool:
+        assert len(self) == 2 and len(poly) == 2
+        sbbm, sbbM = self.Vertices
+        pbbm, pbbM = poly.getLimits()
+        return (sbbm.x < pbbM.x and sbbM.x > pbbm.x) and (sbbm.y < pbbM.y and sbbM.y > pbbm.y)

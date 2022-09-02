@@ -56,3 +56,13 @@ class Drawer():
         glVertex2f(Meio.x, Min.y)
         glVertex2f(Meio.x, Max.y)
         glEnd()
+
+    @staticmethod
+    def drawListPoints(points: List[Point], *color: float) -> None:
+        if color is not None:
+            glColor3f(*color)
+
+        for p in points:
+            glBegin(GL_POINTS)
+            glVertex3f(p.x, p.y, p.z)
+            glEnd()
