@@ -1,5 +1,5 @@
 # Collision methods
-Esse trabalho consiste em desenvolver um programa que avalie algoritmos de inclusão de ponto em triângulos, usando OpenGL. O programa exibe um conjunto de pontos na tela e sobre este exibe um triângulo que simula o campo de visão de um observador em um cenário 3D.
+This application is a study of collision detection algorithms between a set of points and a polygon, using OpenGL. The main program displays the set of points into the screen as well as a triangule to simulate the field of vision of a observer in a 3D scenario
 
 ## Installation
 
