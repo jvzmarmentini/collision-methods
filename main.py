@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 import argparse
 import copy
-from functools import reduce
 import os
 import random
-from socket import getdefaulttimeout
 import string
+import time
+from functools import reduce
 
 import numpy as np
 from anytree import Node, PreOrderIter, RenderTree
@@ -35,14 +35,15 @@ PontoClicado = Point()
 
 flagDesenhaEixos = True
 
-QuadTreeRoot = Node("q", poly=Polygon(Min, Max), inside=[])
-QuadTreeColor = np.random.random((6, 3))
+QuadTreeRoot = None
+QuadTreeColor = np.random.random((15, 3))
+QuadTreeMinN = 6
 
 performance = {}
-
+overhead = {"initQuadTree total overhead" : 0}
 
 def raw():
-    performance.update({"outside":0})
+    performance.update({"outside": 0})
 
     glPointSize(4)
     glBegin(GL_POINTS)
@@ -55,7 +56,7 @@ def raw():
 
 
 def bruteForce():
-    performance.update({"inside":0,"outside":0})
+    performance.update({"inside": 0, "outside": 0})
 
     glPointSize(4)
     glBegin(GL_POINTS)
@@ -72,7 +73,7 @@ def bruteForce():
 
 
 def envelope():
-    performance.update({"inside":0,"inside-bbox":0,"outside":0})
+    performance.update({"inside": 0, "inside-bbox": 0, "outside": 0})
     Drawer.drawBBox(BBox, 0, 1, 1)
 
     glPointSize(4)
@@ -92,6 +93,20 @@ def envelope():
     glEnd()
 
 
+def initQuadTree() -> Node:
+    start = time.time()
+
+    quadTreePoints = copy.deepcopy(PontosDoCenario.Vertices)
+    quadTreeRoot = Node("q", poly=Polygon(Min, Max), inside=[])
+    _initQuadTree(Min, Max, quadTreeRoot, quadTreePoints)
+
+    end = time.time() - start
+
+    overhead["initQuadTree total overhead"] += end
+    overhead["initQuadTree overhead"] = end
+
+    return quadTreeRoot
+
 def _initQuadTree(gmin: Point, gmax: Point, parent: Node, points: List[Point]) -> None:
     alp = ['a', 'b', 'c', 'd']
 
@@ -105,16 +120,17 @@ def _initQuadTree(gmin: Point, gmax: Point, parent: Node, points: List[Point]) -
             lmax = Point(mid.x + c * delta.x, mid.y + s * delta.y)
             poly = Polygon(lmin, lmax)
 
-            inside = list(filter(lambda p: not poly.isPointInsideBox(p), points))
+            inside = list(
+                filter(lambda p: not poly.isPointInsideBox(p), points))
 
             node = Node(name=name, poly=poly, parent=parent, inside=inside)
-            if len(inside) > 2 and node.depth < 5:
+            if len(inside) > QuadTreeMinN:
                 _initQuadTree(lmin, lmax, node, inside)
 
 
 def quadTree():
     global Min, Max, BBoxm, QuadTreeRoot, QuadTreeColor
-    performance.update({"inside":0,"inside-bbox":0,"outside":0})
+    performance.update({"inside": 0, "inside-bbox": 0, "outside": 0, "max-points-inside": QuadTreeMinN})
 
     for leafNode in PreOrderIter(QuadTreeRoot, filter_=lambda n: n.is_leaf):
         if not BBox.collisionWithBBox(leafNode.poly):
@@ -137,7 +153,6 @@ def quadTree():
                     Drawer.drawPoint(p, 1, 1, 0)
                     performance["inside-bbox"] += 1
             glEnd()
-
 
 
 queue = [raw, bruteForce, envelope, quadTree]
@@ -202,11 +217,13 @@ def AvancaCampoDeVisao(distancia):
 def init(filepath: string) -> None:
     global PosicaoDoCampoDeVisao, AnguloDoCampoDeVisao
     global Min, Max, Meio, Tamanho
+    global QuadTreeRoot
 
     glClearColor(0, 0, 0, 1)
 
     if filepath is None:
-        Min, Max = generatePoints(1000, Point(0, 0), Point(500, 500)).getLimits()
+        Min, Max = generatePoints(1000, Point(
+            0, 0), Point(500, 500)).getLimits()
     else:
         Min, Max = readFromFile(filepath).getLimits()
 
@@ -224,9 +241,7 @@ def init(filepath: string) -> None:
     BBox.insertVertice(max)
 
     PosicionaTrianguloDoCampoDeVisao()
-
-    quadTreePoints = copy.deepcopy(PontosDoCenario.Vertices)
-    _initQuadTree(Min, Max, QuadTreeRoot, quadTreePoints)
+    QuadTreeRoot = initQuadTree()
 
 
 def reshape(w, h):
@@ -244,8 +259,6 @@ def reshape(w, h):
 
 
 def display():
-    global flagDesenhaEixos
-
     os.system('cls' if os.name == 'nt' else 'clear')
     performance.clear()
 
@@ -260,6 +273,10 @@ def display():
     queue[0]()
     Drawer.drawPolygon(CampoDeVisao, 1, 0, 0)
 
+    for k,v in overhead.items():
+        print(f"{k}: {v}")
+
+    print()
     print("total:", sum(performance.values()))
     for k, v in performance.items():
         print(f"{k}: {v}")
@@ -270,7 +287,7 @@ def display():
 
 def keyboard(*args):
     global flagDesenhaEixos, TamanhoCampoVisao
-    global queue
+    global queue, QuadTreeMinN, QuadTreeRoot
 
     # If escape is pressed, kill everything.
     if args[0] == b'q' or args[0] == b'\x1b':
@@ -281,6 +298,14 @@ def keyboard(*args):
         queue.insert(0, queue.pop())
     if args[0] == b'p':
         print(PontosDoCenario)
+    if args[0] == b'x':
+        QuadTreeMinN += 1
+        QuadTreeRoot = initQuadTree()
+        glutPostRedisplay()
+    if args[0] == b'z' and QuadTreeMinN > 1:
+        QuadTreeMinN -= 1
+        QuadTreeRoot = initQuadTree()
+        glutPostRedisplay()
     if args[0] == b'.':
         TamanhoCampoVisao += .01
     if args[0] == b',':
