@@ -27,11 +27,22 @@ This path location depends on your python installation. If you're using a virtua
 python main.py
 ```
 
+### File
+
 To read the set of points from a file, use:
 
 ```bash
 python main.py --file {filepath}
 ``` 
+
+You must use the following pattern in your file:
+
+```txt
+x_cord_1 y_cord_2
+x_cord_2 y_cord_2
+...
+x_cord_n y_cord_n
+```
 
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.

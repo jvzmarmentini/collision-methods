@@ -6,8 +6,8 @@ import random
 import string
 import time
 from functools import reduce
+from typing import List
 
-import numpy as np
 from anytree import Node, PreOrderIter, RenderTree
 from OpenGL.GL import *
 from OpenGL.GLU import *
@@ -36,11 +36,12 @@ PontoClicado = Point()
 flagDesenhaEixos = True
 
 QuadTreeRoot = None
-QuadTreeColor = np.random.random((15, 3))
+QuadTreeColor = [[random.random() for _ in range(3)] for _ in range(15)]
 QuadTreeMinN = 6
 
 performance = {}
-overhead = {"initQuadTree total overhead" : 0}
+overhead = {"initQuadTree total overhead": 0}
+
 
 def raw():
     performance.update({"outside": 0})
@@ -107,6 +108,7 @@ def initQuadTree() -> Node:
 
     return quadTreeRoot
 
+
 def _initQuadTree(gmin: Point, gmax: Point, parent: Node, points: List[Point]) -> None:
     alp = ['a', 'b', 'c', 'd']
 
@@ -130,7 +132,8 @@ def _initQuadTree(gmin: Point, gmax: Point, parent: Node, points: List[Point]) -
 
 def quadTree():
     global Min, Max, BBoxm, QuadTreeRoot, QuadTreeColor
-    performance.update({"inside": 0, "inside-bbox": 0, "outside": 0, "max-points-inside": QuadTreeMinN})
+    performance.update({"inside": 0, "inside-bbox": 0,
+                       "outside": 0, "max-points-inside": QuadTreeMinN})
 
     for leafNode in PreOrderIter(QuadTreeRoot, filter_=lambda n: n.is_leaf):
         if not BBox.collisionWithBBox(leafNode.poly):
@@ -273,7 +276,7 @@ def display():
     queue[0]()
     Drawer.drawPolygon(CampoDeVisao, 1, 0, 0)
 
-    for k,v in overhead.items():
+    for k, v in overhead.items():
         print(f"{k}: {v}")
 
     print()
