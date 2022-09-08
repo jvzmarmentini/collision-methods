@@ -47,7 +47,7 @@ x_cord_n y_cord_n
 ## Docker
 
 ```diff
-> This is NOT working in red
+This is NOT working in red
 ```
 
 ### Install and Setup
