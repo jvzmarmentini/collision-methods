@@ -35,9 +35,11 @@ PontoClicado = Point()
 
 flagDesenhaEixos = True
 
-QuadTreeRoot = None
-QuadTreeColor = [[random.random() for _ in range(3)] for _ in range(15)]
-QuadTreeMinN = 6
+QTRoot = None
+QTColor = [[random.random() for _ in range(3)] for _ in range(20)]
+QTMinN = 6
+QTBBoxPrecision = 6
+QTShowAll = False
 
 performance = {}
 overhead = {"initQuadTree total overhead": 0}
@@ -114,29 +116,35 @@ def _initQuadTree(gmin: Point, gmax: Point, parent: Node, points: List[Point]) -
 
     mid = (gmin + gmax) * .5
     delta = mid - gmin
+    prc = 10 ** -QTBBoxPrecision
 
     for s in [0, 1]:
         for c in [0, 1]:
             name = parent.name + alp.pop(0)
-            lmin = Point(gmin.x + c * delta.x, gmin.y + s * delta.y)
-            lmax = Point(mid.x + c * delta.x, mid.y + s * delta.y)
+            lmin = Point(gmin.x + c * (delta.x + prc),
+                         gmin.y + s * (delta.y + prc))
+            lmax = Point(mid.x + c * delta.x,
+                         mid.y + s * delta.y)
             poly = Polygon(lmin, lmax)
 
             inside = list(
                 filter(lambda p: not poly.isPointInsideBox(p), points))
 
             node = Node(name=name, poly=poly, parent=parent, inside=inside)
-            if len(inside) > QuadTreeMinN:
+            if len(inside) > QTMinN:
                 _initQuadTree(lmin, lmax, node, inside)
 
 
 def quadTree():
-    global Min, Max, BBoxm, QuadTreeRoot, QuadTreeColor
+    global Min, Max, BBoxm, QTRoot, QTColor
     performance.update({"inside": 0, "inside-bbox": 0,
-                       "outside": 0, "max-points-inside": QuadTreeMinN})
+                       "outside": 0})
 
-    for leafNode in PreOrderIter(QuadTreeRoot, filter_=lambda n: n.is_leaf):
+    for leafNode in PreOrderIter(QTRoot, filter_=lambda n: n.is_leaf):
         if not BBox.collisionWithBBox(leafNode.poly):
+            if QTShowAll:
+                Drawer.drawBBox(leafNode.poly, *QTColor[leafNode.depth])
+
             glPointSize(4)
             glBegin(GL_POINTS)
             for p in leafNode.inside:
@@ -144,7 +152,7 @@ def quadTree():
                 performance["outside"] += 1
             glEnd()
         else:
-            Drawer.drawBBox(leafNode.poly, *QuadTreeColor[leafNode.depth])
+            Drawer.drawBBox(leafNode.poly, *QTColor[leafNode.depth])
 
             glPointSize(4)
             glBegin(GL_POINTS)
@@ -158,7 +166,7 @@ def quadTree():
             glEnd()
 
 
-queue = [raw, bruteForce, envelope, quadTree]
+queue = [quadTree, raw, bruteForce, envelope]
 
 
 def generatePoints(qtd, Min: Point, Max: Point) -> Polygon:
@@ -220,7 +228,7 @@ def AvancaCampoDeVisao(distancia):
 def init(filepath: string) -> None:
     global PosicaoDoCampoDeVisao, AnguloDoCampoDeVisao
     global Min, Max, Meio, Tamanho
-    global QuadTreeRoot
+    global QTRoot
 
     glClearColor(0, 0, 0, 1)
 
@@ -244,7 +252,7 @@ def init(filepath: string) -> None:
     BBox.insertVertice(max)
 
     PosicionaTrianguloDoCampoDeVisao()
-    QuadTreeRoot = initQuadTree()
+    QTRoot = initQuadTree()
 
 
 def reshape(w, h):
@@ -273,8 +281,10 @@ def display():
         Drawer.drawAxis(Min, Max, Meio)
 
     Drawer.displayTitle(queue[0].__name__, Min.x, Max.y)
+    Drawer.displayTitle("<q> to quit, <a> to next, <s> to previous", Min.x, Min.y - 25)
     queue[0]()
     Drawer.drawPolygon(CampoDeVisao, 1, 0, 0)
+
 
     for k, v in overhead.items():
         print(f"{k}: {v}")
@@ -283,6 +293,9 @@ def display():
     print("total:", sum(performance.values()))
     for k, v in performance.items():
         print(f"{k}: {v}")
+    if queue[0].__name__ == "quadTree":
+        print(f"max-points-inside <z,x>: {QTMinN}")
+        print(f"bbox-precision <c, v>: {10**-QTBBoxPrecision}")
 
     glutSwapBuffers()
     # glutPostRedisplay()
@@ -290,7 +303,7 @@ def display():
 
 def keyboard(*args):
     global flagDesenhaEixos, TamanhoCampoVisao
-    global queue, QuadTreeMinN, QuadTreeRoot
+    global queue, QTMinN, QTRoot, QTBBoxPrecision, QTShowAll
 
     # If escape is pressed, kill everything.
     if args[0] == b'q' or args[0] == b'\x1b':
@@ -302,13 +315,20 @@ def keyboard(*args):
     if args[0] == b'p':
         return print(PontosDoCenario)
     if args[0] == b'x':
-        QuadTreeMinN += 1
-        QuadTreeRoot = initQuadTree()
+        QTMinN += 1
+        QTRoot = initQuadTree()
         glutPostRedisplay()
-    if args[0] == b'z' and QuadTreeMinN > 1:
-        QuadTreeMinN -= 1
-        QuadTreeRoot = initQuadTree()
-        glutPostRedisplay()
+    if args[0] == b'z' and QTMinN > 1:
+        QTMinN -= 1
+        QTRoot = initQuadTree()
+    if args[0] == b'v':
+        QTBBoxPrecision += 1
+        QTRoot = initQuadTree()
+    if args[0] == b'c' and QTBBoxPrecision > 0:
+        QTBBoxPrecision -= 1
+        QTRoot = initQuadTree()
+    if args[0] == b'b':
+        QTShowAll = not QTShowAll 
     if args[0] == b'.':
         TamanhoCampoVisao += .01
     if args[0] == b',':
