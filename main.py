@@ -300,7 +300,7 @@ def keyboard(*args):
     if args[0] == b'a':
         queue.insert(0, queue.pop())
     if args[0] == b'p':
-        print(PontosDoCenario)
+        return print(PontosDoCenario)
     if args[0] == b'x':
         QuadTreeMinN += 1
         QuadTreeRoot = initQuadTree()
