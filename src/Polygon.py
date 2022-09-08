@@ -1,6 +1,5 @@
 import copy
 from tkinter import mainloop
-from typing import List
 
 from multipledispatch import dispatch
 from OpenGL.GL import *
