@@ -44,6 +44,27 @@ x_cord_2 y_cord_2
 x_cord_n y_cord_n
 ```
 
+## Docker
+
+```diff
+> This is NOT working in red
+```
+
+### Install and Setup
+
+[Install Docker on your machine](https://docs.docker.com/get-docker/).
+Then, build the .dockerfile 
+    
+```bash
+docker build -t collision-method .
+```
+
+### Usage
+
+```bash
+docker run collision-method
+```
+
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
