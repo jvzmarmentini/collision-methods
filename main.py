@@ -6,6 +6,7 @@ import random
 import string
 import time
 from functools import reduce
+from turtle import pos
 from typing import List
 
 from anytree import Node, PreOrderIter, RenderTree
@@ -43,55 +44,55 @@ QTShowAll = True
 
 performance = {}
 overhead = {"initQuadTree total overhead": 0}
+total = 0
+pos = None
 
 
 def raw():
-    performance.update({"outside": 0})
+    global total
 
     glPointSize(4)
     glBegin(GL_POINTS)
 
     for p in PontosDoCenario.Vertices:
+        total += 1
         Drawer.drawPoint(p, 1, 0, 0)
-        performance["outside"] += 1
 
     glEnd()
 
 
 def bruteForce():
-    performance.update({"inside": 0, "outside": 0})
+    performance.update({"bruteForce": 0})
 
     glPointSize(4)
     glBegin(GL_POINTS)
 
     for p in PontosDoCenario.Vertices:
+        performance["bruteForce"] += 1
         if CampoDeVisao.isPointInside(p):
             Drawer.drawPoint(p, 0, 1, 0)
-            performance["inside"] += 1
         else:
             Drawer.drawPoint(p, 1, 0, 0)
-            performance["outside"] += 1
 
     glEnd()
 
 
 def envelope():
-    performance.update({"inside": 0, "inside-bbox": 0, "outside": 0})
+    performance.update({"bruteForce": 0, "envelope x point": 0})
     Drawer.drawBBox(BBox, 3, 0, 1, 1)
 
     glPointSize(4)
     glBegin(GL_POINTS)
     for p in PontosDoCenario.Vertices:
+        performance["envelope x point"] += 1
         if BBox.isPointInsideBox(p):
             Drawer.drawPoint(p, 1, 0, 0)
-            performance["outside"] += 1
         else:
+            performance["bruteForce"] += 1
             if CampoDeVisao.isPointInside(p):
                 Drawer.drawPoint(p, 0, 1, 0)
-                performance["inside"] += 1
             else:
                 Drawer.drawPoint(p, 1, 1, 0)
-                performance["inside-bbox"] += 1
 
     glEnd()
 
@@ -137,12 +138,12 @@ def _initQuadTree(gmin: Point, gmax: Point, parent: Node, points: List[Point]) -
 
 def quadTree():
     global Min, Max, BBoxm, QTRoot, QTColor
-    performance.update({"inside": 0, "inside-bbox": 0,
-                       "outside": 0})
     
+    performance.update({"bruteForce": 0, "envelope x envelope": 0}) 
     Drawer.drawBBox(BBox, 3, 0, 1, 1)
 
     for leafNode in PreOrderIter(QTRoot, filter_=lambda n: n.is_leaf):
+        performance["envelope x envelope"] += 1
         if not BBox.collisionWithBBox(leafNode.poly):
             if QTShowAll:
                 Drawer.drawBBox(leafNode.poly, 1, *QTColor[leafNode.depth])
@@ -151,7 +152,6 @@ def quadTree():
             glBegin(GL_POINTS)
             for p in leafNode.inside:
                 Drawer.drawPoint(p, 1, 0, 0)
-                performance["outside"] += 1
             glEnd()
         else:
             Drawer.drawBBox(leafNode.poly, 1, *QTColor[leafNode.depth])
@@ -159,16 +159,15 @@ def quadTree():
             glPointSize(4)
             glBegin(GL_POINTS)
             for p in leafNode.inside:
+                performance["bruteForce"] += 1
                 if CampoDeVisao.isPointInside(p):
                     Drawer.drawPoint(p, 0, 1, 0)
-                    performance["inside"] += 1
                 else:
                     Drawer.drawPoint(p, 1, 1, 0)
-                    performance["inside-bbox"] += 1
             glEnd()
 
 
-queue = [raw, bruteForce, envelope, quadTree]
+queue = [bruteForce, envelope, quadTree]
 
 def generatePoints(qtd, Min: Point, Max: Point) -> Polygon:
     Escala = (Max - Min) * (1.0/1000.0)
@@ -254,6 +253,8 @@ def init(filepath: string) -> None:
 
     PosicionaTrianguloDoCampoDeVisao()
     QTRoot = initQuadTree()
+    
+    PosicionaCampoDeVisao(1)
 
 
 def reshape(w, h):
@@ -286,17 +287,18 @@ def display():
     queue[0]()
     Drawer.drawPolygon(CampoDeVisao, 1, 0, 0)
 
-
-    for k, v in overhead.items():
-        print(f"{k}: {v}")
-
-    print()
-    print("total:", sum(performance.values()))
+    # print(f"total: {total}")
+    print(f"Modo {queue[0].__name__}")
+    print(f"Posição {pos}")
     for k, v in performance.items():
         print(f"{k}: {v}")
-    if queue[0].__name__ == "quadTree":
-        print(f"max-points-inside <z,x>: {QTMinN}")
-        print(f"bbox-precision <c, v>: {10**-QTBBoxPrecision}")
+    print()
+    
+    # if queue[0].__name__ == "quadTree":
+    #     for k, v in overhead.items():
+    #         print(f"{k}: {v}")
+    #     print(f"max-points-inside: {QTMinN}")
+    #     print(f"bbox-precision: {10**-QTBBoxPrecision}")
 
     glutSwapBuffers()
     # glutPostRedisplay()
@@ -304,7 +306,9 @@ def display():
 
 def PosicionaCampoDeVisao(n):
     global AnguloDoCampoDeVisao, PosicaoDoCampoDeVisao
-
+    global pos
+    
+    pos = n
     if n == 1:
         AnguloDoCampoDeVisao = 0
         PosicaoDoCampoDeVisao = Meio
