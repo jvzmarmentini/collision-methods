@@ -37,7 +37,8 @@ PontoClicado = Point()
 flagDesenhaEixos = True
 
 QTRoot = None
-QTColor = [[random.random() for _ in range(3)] for _ in range(20)]
+# QTColor = [[random.random() for _ in range(3)] for _ in range(20)]
+QTColor = [[0,.9,.5],[.8,0,1],[1,.6,.2],[0,.9,.5],[.8,0,1],[1,.6,.2],[0,.9,.5],[.8,0,1],[1,.6,.2]]
 QTMinN = 10
 QTBBoxPrecision = 5
 QTShowAll = True
@@ -272,7 +273,7 @@ def reshape(w, h):
 
 
 def display():
-    os.system('cls' if os.name == 'nt' else 'clear')
+    # os.system('cls' if os.name == 'nt' else 'clear')
     performance.clear()
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
@@ -294,11 +295,11 @@ def display():
         print(f"{k}: {v}")
     print()
     
-    # if queue[0].__name__ == "quadTree":
-    #     for k, v in overhead.items():
-    #         print(f"{k}: {v}")
-    #     print(f"max-points-inside: {QTMinN}")
-    #     print(f"bbox-precision: {10**-QTBBoxPrecision}")
+    if queue[0].__name__ == "quadTree":
+        # for k, v in overhead.items():
+        #     print(f"{k}: {v}")
+        print(f"max-points-inside: {QTMinN}")
+        print(f"bbox-precision: {10**-QTBBoxPrecision}")
 
     glutSwapBuffers()
     # glutPostRedisplay()
