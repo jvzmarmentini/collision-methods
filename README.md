@@ -1,5 +1,5 @@
 # Collision methods
-Esse trabalho consiste em desenvolver um programa que avalie algoritmos de inclusão de ponto em triângulos, usando OpenGL. O programa exibe um conjunto de pontos na tela e sobre este exibe um triângulo que simula o campo de visão de um observador em um cenário 3D.
+This application is a study of collision detection algorithms between a set of points and a polygon, using OpenGL. The main program displays the set of points into the screen as well as a triangule to simulate the field of vision of a observer in a 3D scenario
 
 ## Installation
 
@@ -27,11 +27,43 @@ This path location depends on your python installation. If you're using a virtua
 python main.py
 ```
 
+### File
+
 To read the set of points from a file, use:
 
 ```bash
 python main.py --file {filepath}
 ``` 
+
+You must use the following pattern in your file:
+
+```txt
+x_cord_1 y_cord_2
+x_cord_2 y_cord_2
+...
+x_cord_n y_cord_n
+```
+
+## Docker
+
+```diff
+! This is NOT working
+```
+
+### Install and Setup
+
+[Install Docker on your machine](https://docs.docker.com/get-docker/).
+Then, build the .dockerfile 
+    
+```bash
+docker build -t collision-method .
+```
+
+### Usage
+
+```bash
+docker run collision-method
+```
 
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
