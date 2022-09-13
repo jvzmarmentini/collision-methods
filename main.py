@@ -37,9 +37,9 @@ flagDesenhaEixos = True
 
 QTRoot = None
 QTColor = [[random.random() for _ in range(3)] for _ in range(20)]
-QTMinN = 6
-QTBBoxPrecision = 6
-QTShowAll = False
+QTMinN = 10
+QTBBoxPrecision = 5
+QTShowAll = True
 
 performance = {}
 overhead = {"initQuadTree total overhead": 0}
@@ -77,7 +77,7 @@ def bruteForce():
 
 def envelope():
     performance.update({"inside": 0, "inside-bbox": 0, "outside": 0})
-    Drawer.drawBBox(BBox, 0, 1, 1)
+    Drawer.drawBBox(BBox, 3, 0, 1, 1)
 
     glPointSize(4)
     glBegin(GL_POINTS)
@@ -139,11 +139,13 @@ def quadTree():
     global Min, Max, BBoxm, QTRoot, QTColor
     performance.update({"inside": 0, "inside-bbox": 0,
                        "outside": 0})
+    
+    Drawer.drawBBox(BBox, 3, 0, 1, 1)
 
     for leafNode in PreOrderIter(QTRoot, filter_=lambda n: n.is_leaf):
         if not BBox.collisionWithBBox(leafNode.poly):
             if QTShowAll:
-                Drawer.drawBBox(leafNode.poly, *QTColor[leafNode.depth])
+                Drawer.drawBBox(leafNode.poly, 1, *QTColor[leafNode.depth])
 
             glPointSize(4)
             glBegin(GL_POINTS)
@@ -152,7 +154,7 @@ def quadTree():
                 performance["outside"] += 1
             glEnd()
         else:
-            Drawer.drawBBox(leafNode.poly, *QTColor[leafNode.depth])
+            Drawer.drawBBox(leafNode.poly, 1, *QTColor[leafNode.depth])
 
             glPointSize(4)
             glBegin(GL_POINTS)
@@ -165,13 +167,6 @@ def quadTree():
                     performance["inside-bbox"] += 1
             glEnd()
 
-
-<<<<<<< HEAD
-queue = [raw, bruteForce, envelope, quadTree]
-=======
-queue = [quadTree, raw, bruteForce, envelope]
-
->>>>>>> 012e18713e3307ef489e1c1218321d2782e016fe
 
 queue = [raw, bruteForce, envelope, quadTree]
 
@@ -330,7 +325,6 @@ def keyboard(*args):
     global flagDesenhaEixos, TamanhoCampoVisao
     global queue, QTMinN, QTRoot, QTBBoxPrecision, QTShowAll
 
-    # If escape is pressed, kill everything.
     if args[0] == b'q' or args[0] == b'\x1b':
         os._exit(0)
     if args[0] == b's':
@@ -339,10 +333,19 @@ def keyboard(*args):
         queue.insert(0, queue.pop())
     if args[0] == b'p':
         return print(PontosDoCenario)
+    if args[0] == b'1':
+        PosicionaCampoDeVisao(1)
+    if args[0] == b'2':
+        PosicionaCampoDeVisao(2)
+    if args[0] == b'3':
+        PosicionaCampoDeVisao(3)
+    if args[0] == b'4':
+        PosicionaCampoDeVisao(4)
+    
+    # QuadTree commands
     if args[0] == b'x':
         QTMinN += 1
         QTRoot = initQuadTree()
-        glutPostRedisplay()
     if args[0] == b'z' and QTMinN > 1:
         QTMinN -= 1
         QTRoot = initQuadTree()
@@ -354,6 +357,8 @@ def keyboard(*args):
         QTRoot = initQuadTree()
     if args[0] == b'b':
         QTShowAll = not QTShowAll 
+        
+    # CampoVisao commands
     if args[0] == b'.':
         TamanhoCampoVisao += .01
     if args[0] == b',':
@@ -414,7 +419,7 @@ def main():
 
     glutInit()
     glutInitDisplayMode(GLUT_RGBA)
-    glutInitWindowSize(750, 750)
+    glutInitWindowSize(900, 900)
 
     mainWindow = glutCreateWindow("Pontos no Triangulo")
     glutDisplayFunc(display)

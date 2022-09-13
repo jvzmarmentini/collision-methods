@@ -35,13 +35,14 @@ class Drawer():
         glVertex3f(vertice.x, vertice.y, vertice.z)
 
     @staticmethod
-    def drawBBox(polygon: Polygon, *color: float) -> None:
+    def drawBBox(polygon: Polygon, width:int,  *color: float) -> None:
         assert len(polygon) == 2
         v = polygon.Vertices
 
         if color is not None:
             glColor3f(*color)
 
+        glLineWidth(width)
         glBegin(GL_LINE_LOOP)
         for o in [0, 1]:
             for i in [0, 1]:
