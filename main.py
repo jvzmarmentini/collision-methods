@@ -111,10 +111,8 @@ def quadTree():
 
     # DotExporter(QuadTreeRoot).to_picture("assets/root.png")
 
-    
-
     for leafNode in PreOrderIter(QuadTreeRoot, filter_=lambda n: n.is_leaf):
-        
+
         if not BBox.collisionWithBBox(leafNode.poly):
             glPointSize(4)
             glBegin(GL_POINTS)
@@ -131,7 +129,6 @@ def quadTree():
                 else:
                     Drawer.drawPoint(p, 1, 1, 0)
             glEnd()
-
 
 
 queue = [raw, bruteForce, envelope, quadTree]
@@ -265,6 +262,25 @@ def display():
 
     glutSwapBuffers()
     # glutPostRedisplay()
+
+
+def PosicionaCampoDeVisao(n):
+    global AnguloDoCampoDeVisao, PosicaoDoCampoDeVisao
+
+    if n == 1:
+        AnguloDoCampoDeVisao = 0
+        PosicaoDoCampoDeVisao = Meio
+    if n == 2:
+        AnguloDoCampoDeVisao = 90
+        PosicaoDoCampoDeVisao = Meio
+    if n == 3:
+        AnguloDoCampoDeVisao = 90
+        PosicaoDoCampoDeVisao = Meio*0.5
+    if n == 4:
+        AnguloDoCampoDeVisao = 0
+        PosicaoDoCampoDeVisao = Meio + Meio*0.5
+
+    PosicionaTrianguloDoCampoDeVisao()
 
 
 def keyboard(*args):
